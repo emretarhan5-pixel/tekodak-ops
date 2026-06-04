@@ -129,26 +129,28 @@ export function DeleteStockItemButton({
             </DialogDescription>
           </DialogHeader>
 
-          {impactLoading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-              İlişkili kayıtlar kontrol ediliyor…
-            </div>
-          ) : (
-            <ul className="space-y-1 text-sm text-muted-foreground">
-              <li>{impact.movementCount} stok hareketi</li>
-              <li>{impact.workOrderPartCount} iş emri kullanımı</li>
-              <li>{impact.branchStockCount} şube stok tanımı</li>
-            </ul>
-          )}
+          <div className="min-h-28 space-y-3">
+            {impactLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                İlişkili kayıtlar kontrol ediliyor…
+              </div>
+            ) : (
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                <li>{impact.movementCount} stok hareketi</li>
+                <li>{impact.workOrderPartCount} iş emri kullanımı</li>
+                <li>{impact.branchStockCount} şube stok tanımı</li>
+              </ul>
+            )}
 
-          {impact.movementCount > 0 ? (
-            <p className="text-sm text-amber-700 dark:text-amber-300">
-              Bu ürünün {impact.movementCount} hareketi var, silmek istediğine
-              emin misin? Silme işlemi ürün kartını gizler; hareket geçmişi
-              korunur.
-            </p>
-          ) : null}
+            {impact.movementCount > 0 ? (
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                Bu ürünün {impact.movementCount} hareketi var, silmek istediğine
+                emin misin? Silme işlemi ürün kartını gizler; hareket geçmişi
+                korunur.
+              </p>
+            ) : null}
+          </div>
 
           <DeleteConfirmCheckbox
             id="confirm-delete-stock"

@@ -155,17 +155,19 @@ export function CustomerDeleteButton({
             </DialogDescription>
           </DialogHeader>
 
-          {impactLoading ? (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-              İlişkili kayıtlar kontrol ediliyor…
-            </p>
-          ) : hasImpact ? (
-            <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
-              ⚠️ {activeContracts} aktif sözleşme ve {openWorkOrders} açık iş var;
-              bunlar da etkilenecek.
-            </p>
-          ) : null}
+          <div className="min-h-20">
+            {impactLoading ? (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                İlişkili kayıtlar kontrol ediliyor…
+              </p>
+            ) : hasImpact ? (
+              <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
+                ⚠️ {activeContracts} aktif sözleşme ve {openWorkOrders} açık iş
+                var; bunlar da etkilenecek.
+              </p>
+            ) : null}
+          </div>
 
           <DeleteConfirmCheckbox
             id="delete-confirm"

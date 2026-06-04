@@ -1,5 +1,5 @@
-import { ModuleSkeletonPage } from "@/components/layout/module-skeleton-page";
+import { redirect } from "next/navigation";
 
 export default function InventoryPage() {
-  return <ModuleSkeletonPage title="Stok" promptNumber={8} />;
+  redirect("/stock");
 }

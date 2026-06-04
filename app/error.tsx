@@ -55,7 +55,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             className={cn(buttonVariants({ variant: "outline", size: "lg" }), "gap-2")}
           >
             <Home className="size-4" aria-hidden />
-            Dashboard&apos;a Dön
+            Ana Sayfaya Dön
           </Link>
         </div>
       </div>

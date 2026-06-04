@@ -162,7 +162,11 @@ export function ContractList({ data }: ContractListProps) {
   });
 
   return (
-    <div className={cn("hidden md:block rounded-lg border border-border")}>
+    <div
+      className={cn(
+        "hidden overflow-x-auto md:block rounded-lg border border-border",
+      )}
+    >
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (

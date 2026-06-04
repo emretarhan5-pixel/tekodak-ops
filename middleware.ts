@@ -20,6 +20,7 @@ const PROTECTED_PREFIXES = [
   "/settings",
   "/profile",
   "/notifications",
+  "/inventory",
 ] as const;
 
 function isAuthRoute(pathname: string): boolean {

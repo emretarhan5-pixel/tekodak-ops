@@ -5,7 +5,7 @@ import { Trash2 } from "lucide-react";
 import { NotificationTypeIcon } from "@/components/notifications/notification-type-icon";
 import { Button } from "@/components/ui/button";
 import type { NotificationItem } from "@/lib/api/notifications/types";
-import { formatRelativeTime } from "@/lib/utils/format-relative-time";
+import { RelativeTime } from "@/components/ui/relative-time";
 import { cn } from "@/lib/utils";
 
 type NotificationListItemProps = {
@@ -43,9 +43,10 @@ export function NotificationListItem({
         >
           {notification.message}
         </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {formatRelativeTime(notification.createdAt)}
-        </p>
+        <RelativeTime
+          date={notification.createdAt}
+          className="mt-0.5 block text-xs text-muted-foreground"
+        />
       </div>
       {!notification.isRead ? (
         <span

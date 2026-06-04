@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { rootMetadata } from "@/lib/metadata/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,10 +12,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "TEKODAK OPS",
-  description: "TEKODAK internal field service management platform",
-};
+export const metadata = rootMetadata;
 
 export default function RootLayout({
   children,

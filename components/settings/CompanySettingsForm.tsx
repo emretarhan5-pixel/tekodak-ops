@@ -1,13 +1,13 @@
 "use client";
 
-import { Loader2, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/auth/submit-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -94,25 +94,19 @@ export function CompanySettingsForm({
               {...form.register("logo_url")}
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Dosya yükleme PROMPT 16 ile eklenecek; şimdilik logo adresi
-              girin.
+              Logo için geçerli bir görsel URL adresi girin.
             </p>
           </Field>
 
           <div className="flex justify-end pt-2">
-            <Button type="submit" className="gap-2" disabled={saving}>
-              {saving ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Kaydediliyor…
-                </>
-              ) : (
-                <>
-                  <Save className="size-4" />
-                  Kaydet
-                </>
-              )}
-            </Button>
+            <SubmitButton
+              isLoading={saving}
+              loadingText="Kaydediliyor…"
+              className="h-10 w-auto gap-2 px-6"
+            >
+              <Save className="size-4" />
+              Kaydet
+            </SubmitButton>
           </div>
         </form>
       </CardContent>
