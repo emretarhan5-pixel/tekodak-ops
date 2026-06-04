@@ -20,6 +20,8 @@ type RawCustomerRow = {
 type RawContractRow = {
   customer_id: string;
   status: string;
+  start_date: string | null;
+  end_date: string | null;
 };
 
 type RawWorkOrderRow = {

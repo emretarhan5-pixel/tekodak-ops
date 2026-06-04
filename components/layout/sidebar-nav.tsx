@@ -19,7 +19,7 @@ export function SidebarNav({
   collapsed = false,
   onNavigate,
 }: SidebarNavProps) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const user = useDashboardUser();
   const { isAdmin } = getPermissions(user);
   const visibleItems = filterNavForRole(items, isAdmin);

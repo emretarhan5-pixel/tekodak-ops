@@ -113,8 +113,8 @@ export function WorkOrderForm(props: WorkOrderFormProps) {
     !isEdit && "prefillCustomerId" in props
       ? (props.prefillCustomerId ?? null)
       : null;
-  const workOrderId = isEdit ? initialData.id : undefined;
-  const editStatus = isEdit ? initialData.status : null;
+  const workOrderId = mode === "edit" ? props.initialData.id : undefined;
+  const editStatus = mode === "edit" ? props.initialData.status : null;
 
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);

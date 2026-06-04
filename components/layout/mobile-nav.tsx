@@ -21,7 +21,7 @@ import { useUiStore } from "@/stores/ui-store";
 import { cn } from "@/lib/utils";
 
 export function MobileNav() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const user = useDashboardUser();
   const { isAdmin } = getPermissions(user);
   const { mobileMoreOpen, setMobileMoreOpen } = useUiStore();
