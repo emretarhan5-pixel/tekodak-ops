@@ -596,7 +596,13 @@ export function ServiceRequestDetail({
               {serviceRequest.contact_name} · {serviceRequest.phone}
             </p>
             <p className="text-sm text-muted-foreground">
-              Oluşturulma: {formatDateTime(serviceRequest.created_at)}
+              Oluşturulma:{" "}
+              <time
+                dateTime={serviceRequest.created_at}
+                suppressHydrationWarning
+              >
+                {formatDateTime(serviceRequest.created_at)}
+              </time>
             </p>
           </div>
           <ServiceRequestStatusBadge
@@ -607,15 +613,21 @@ export function ServiceRequestDetail({
         </div>
       </div>
 
-      <nav aria-label="Servis talebi adımları">
-        <ol className="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:gap-2">
+      <nav
+        aria-label="Servis talebi adımları"
+        className="-mx-1 overflow-x-auto px-1 pb-1 sm:mx-0 sm:px-0"
+      >
+        <ol className="flex min-w-full flex-col gap-3 sm:min-w-[36rem] sm:flex-row sm:items-stretch sm:gap-2">
           {steps.map((step, index) => {
             const state = getStepState(step, serviceRequest);
             return (
-              <li key={step} className="flex min-w-0 flex-1 items-center gap-2">
+              <li
+                key={step}
+                className="flex min-w-0 flex-1 items-center gap-2 sm:shrink-0"
+              >
                 <div
                   className={cn(
-                    "flex min-w-0 flex-1 flex-col items-center gap-2 rounded-lg border px-2 py-3 text-center transition-colors sm:px-3",
+                    "flex w-full min-w-0 flex-1 flex-col items-center gap-2 rounded-lg border px-2 py-3 text-center transition-colors sm:min-w-[6.5rem] sm:px-3",
                     state === "completed" &&
                       "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/40",
                     state === "active" &&

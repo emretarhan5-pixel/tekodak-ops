@@ -2,7 +2,7 @@ import { pageMetadata } from "@/lib/metadata/site";
 
 export const metadata = pageMetadata(
   "Servis Talepleri",
-  "Müşteri cihaz kaydı, arıza tespiti, teklif ve bakım süreci",
+  "Servis taleplerini listeleyin; kayıt, arıza tespiti, teklif ve bakım süreçlerini yönetin",
 );
 
 export default function ServiceRequestsLayout({

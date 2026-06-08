@@ -25,14 +25,16 @@ export function ServiceRequestCard({
 }) {
   return (
     <article className="rounded-xl border border-border bg-card p-4 shadow-xs">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <p className="font-mono font-semibold">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-mono text-sm font-semibold sm:text-base">
             {serviceRequest.request_number}
           </p>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {SERVICE_REQUEST_STEP_LABELS[serviceRequest.current_step]} ·{" "}
-            {formatCreatedDate(serviceRequest.created_at)}
+            <time dateTime={serviceRequest.created_at} suppressHydrationWarning>
+              {formatCreatedDate(serviceRequest.created_at)}
+            </time>
           </p>
         </div>
         <ServiceRequestStatusBadge
@@ -44,7 +46,7 @@ export function ServiceRequestCard({
       <dl className="mt-3 space-y-2 text-sm">
         <div className="flex justify-between gap-2">
           <dt className="text-muted-foreground">Firma</dt>
-          <dd className="max-w-[60%] text-right font-medium">
+          <dd className="max-w-[58%] break-words text-right font-medium">
             {serviceRequest.company_name}
           </dd>
         </div>
@@ -54,7 +56,7 @@ export function ServiceRequestCard({
         </div>
         <div className="flex justify-between gap-2">
           <dt className="text-muted-foreground">Cihaz</dt>
-          <dd className="max-w-[60%] text-right text-muted-foreground">
+          <dd className="max-w-[58%] break-words text-right text-muted-foreground">
             {serviceRequest.brand_model}
           </dd>
         </div>
@@ -75,7 +77,7 @@ export function ServiceRequestCard({
           href={`/service-requests/${serviceRequest.id}`}
           className={cn(
             buttonVariants({ variant: "outline", size: "sm" }),
-            "w-full",
+            "h-11 min-h-11 w-full",
           )}
         >
           Devam Et →

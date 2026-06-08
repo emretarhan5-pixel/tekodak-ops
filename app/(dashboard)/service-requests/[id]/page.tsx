@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 import { ServiceRequestDetail } from "@/components/service-requests/ServiceRequestDetail";
 import { ServiceRequestApiError } from "@/lib/api/service-requests/auth";
@@ -9,10 +11,32 @@ import { getServiceRequestPartOptions } from "@/lib/api/service-requests/get-ser
 import { getServiceRequestPhotoUrl } from "@/lib/api/service-requests/get-service-request-photo-url";
 import { removeServiceRequestPart } from "@/lib/api/service-requests/remove-service-request-part";
 import { uploadServiceRequestPhoto } from "@/lib/api/service-requests/upload-service-request-photo";
+import { pageMetadata } from "@/lib/metadata/site";
 
 type ServiceRequestDetailPageProps = {
   params: Promise<{ id: string }>;
 };
+
+const getServiceRequestCached = cache(getServiceRequestById);
+
+export async function generateMetadata({
+  params,
+}: ServiceRequestDetailPageProps): Promise<Metadata> {
+  const { id } = await params;
+
+  try {
+    const serviceRequest = await getServiceRequestCached(id);
+    return pageMetadata(
+      serviceRequest.request_number,
+      `${serviceRequest.company_name} — servis talebi detayı`,
+    );
+  } catch (error) {
+    if (error instanceof ServiceRequestApiError && error.code === "NOT_FOUND") {
+      return pageMetadata("Servis Talebi Bulunamadı");
+    }
+    return pageMetadata("Servis Talebi");
+  }
+}
 
 export default async function ServiceRequestDetailPage({
   params,
@@ -20,7 +44,7 @@ export default async function ServiceRequestDetailPage({
   const { id } = await params;
 
   try {
-    const serviceRequest = await getServiceRequestById(id);
+    const serviceRequest = await getServiceRequestCached(id);
 
     return (
       <ServiceRequestDetail

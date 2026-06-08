@@ -107,9 +107,13 @@ export function ServiceRequestList({ data }: ServiceRequestListProps) {
         id: "created_at",
         header: "Tarih",
         cell: ({ row }: CellContext<ServiceRequestListItem, unknown>) => (
-          <span className="whitespace-nowrap text-sm tabular-nums">
+          <time
+            dateTime={row.original.created_at}
+            suppressHydrationWarning
+            className="whitespace-nowrap text-sm tabular-nums"
+          >
             {formatCreatedDate(row.original.created_at)}
-          </span>
+          </time>
         ),
       },
       {
