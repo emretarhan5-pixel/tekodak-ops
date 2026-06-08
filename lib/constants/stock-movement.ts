@@ -19,6 +19,7 @@ export const STOCK_MOVEMENT_KIND_LABELS: Record<StockMovementKind, string> = {
 export const INVENTORY_MOVEMENT_TYPES = [
   "stock_in",
   "work_order_usage",
+  "service_request_usage",
   "manual_out",
   "transfer_out",
   "transfer_in",
@@ -35,6 +36,7 @@ export const INVENTORY_MOVEMENT_TYPE_LABELS: Record<
 > = {
   stock_in: "Giriş",
   work_order_usage: "İş Emri Kullanımı",
+  service_request_usage: "Servis Talebi Kullanımı",
   manual_out: "Çıkış",
   transfer_out: "Transfer Çıkış",
   transfer_in: "Transfer Giriş",
@@ -69,6 +71,7 @@ export function getMovementDisplayTone(
       return "in";
     case "manual_out":
     case "work_order_usage":
+    case "service_request_usage":
     case "transfer_out":
       return "out";
     case "adjustment":

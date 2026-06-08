@@ -14,6 +14,7 @@ const PROTECTED_PREFIXES = [
   "/devices",
   "/contracts",
   "/work-orders",
+  "/service-requests",
   "/stock",
   "/targets",
   "/reports",

@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  ClipboardList,
   FileText,
   Home,
   MoreHorizontal,
@@ -24,7 +25,8 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { label: "Müşteriler", href: "/customers", icon: Users },
   { label: "Cihazlar", href: "/devices", icon: Printer },
   { label: "Sözleşmeler", href: "/contracts", icon: FileText },
-  { label: "İş Emirleri", href: "/work-orders", icon: Wrench },
+  { label: "Servis Talepleri", href: "/service-requests", icon: Wrench },
+  { label: "İş Emirleri", href: "/work-orders", icon: ClipboardList },
   { label: "Stok", href: "/stock", icon: Package },
   { label: "Hedefler", href: "/targets", icon: Target },
   { label: "Raporlar", href: "/reports", icon: BarChart3 },
@@ -39,7 +41,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
 /** Bottom bar on mobile (md and below) */
 export const MOBILE_PRIMARY_NAV: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
-  { label: "İş Emirleri", href: "/work-orders", icon: Wrench },
+  { label: "Servis Talepleri", href: "/service-requests", icon: Wrench },
   { label: "Müşteriler", href: "/customers", icon: Users },
   { label: "Cihazlar", href: "/devices", icon: Printer },
   { label: "Daha Fazla", href: "#more", icon: MoreHorizontal },

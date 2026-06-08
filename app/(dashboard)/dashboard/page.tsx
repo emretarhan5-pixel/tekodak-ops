@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
+import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
 import { Card, CardContent } from "@/components/ui/card";
 import { getDashboardData } from "@/lib/api/dashboard/get-dashboard-data";
+import { getStaffDashboardData } from "@/lib/api/dashboard/get-staff-dashboard-data";
 import { DashboardApiError } from "@/lib/api/dashboard/auth";
 import { getDashboardUser } from "@/lib/auth/get-dashboard-user";
 
@@ -14,6 +16,11 @@ export default async function DashboardPage() {
   }
 
   try {
+    if (user.role === "staff") {
+      const data = await getStaffDashboardData();
+      return <StaffDashboard data={data} />;
+    }
+
     const data = await getDashboardData();
     return <DashboardContent data={data} />;
   } catch (error) {

@@ -1,6 +1,55 @@
+import type { ServiceRequestStatusBadgeVariant } from "@/lib/api/service-requests/service-request-status";
+import type { WorkOrderStatusBadgeVariant } from "@/lib/api/work-orders/work-order-status";
 import type { ContractStatus } from "@/lib/constants/contract";
+import type {
+  ServiceRequestStatus,
+  ServiceRequestStep,
+} from "@/lib/constants/service-request";
 import type { PartUnit } from "@/lib/constants/stock-item";
-import type { WorkOrderStatus } from "@/lib/constants/work-order";
+import type { WorkOrderStatus, WorkOrderType } from "@/lib/constants/work-order";
+
+export type StaffDashboardPlannedDateUrgency =
+  | "normal"
+  | "warning"
+  | "urgent"
+  | "overdue";
+
+export type StaffDashboardServiceRequestItem = {
+  id: string;
+  request_number: string;
+  company_name: string;
+  device_label: string;
+  current_step: ServiceRequestStep;
+  step_label: string;
+  status: ServiceRequestStatus;
+  status_variant: ServiceRequestStatusBadgeVariant;
+  planned_date: string;
+  days_remaining: number;
+  urgency: StaffDashboardPlannedDateUrgency;
+};
+
+export type StaffDashboardWorkOrderItem = {
+  id: string;
+  work_order_number: string;
+  customer_name: string;
+  work_type: WorkOrderType;
+  scheduled_date: string | null;
+  status: WorkOrderStatus;
+  status_variant: WorkOrderStatusBadgeVariant;
+};
+
+export type StaffDashboardSummary = {
+  completedServiceRequestsThisMonth: number;
+  openServiceRequestsCount: number;
+  openWorkOrdersCount: number;
+};
+
+export type StaffDashboardData = {
+  userName: string;
+  openServiceRequests: StaffDashboardServiceRequestItem[];
+  openWorkOrders: StaffDashboardWorkOrderItem[];
+  summary: StaffDashboardSummary;
+};
 
 export type DashboardSummary = {
   activeCustomers: number;

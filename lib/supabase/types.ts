@@ -2142,6 +2142,316 @@ export type Database = {
           },
         ]
       }
+      service_request_parts: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          inventory_movement_id: string | null
+          notes: string | null
+          part_id: string
+          quantity: number
+          service_request_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          inventory_movement_id?: string | null
+          notes?: string | null
+          part_id: string
+          quantity: number
+          service_request_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          inventory_movement_id?: string | null
+          notes?: string | null
+          part_id?: string
+          quantity?: number
+          service_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_request_parts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_request_parts_inventory_movement_id_fkey"
+            columns: ["inventory_movement_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_request_parts_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "parts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_request_parts_service_request_id_fkey"
+            columns: ["service_request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_request_photos: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size_bytes: number
+          id: string
+          mime_type: string
+          service_request_id: string
+          step: number
+          storage_path: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size_bytes: number
+          id?: string
+          mime_type: string
+          service_request_id: string
+          step: number
+          storage_path: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size_bytes?: number
+          id?: string
+          mime_type?: string
+          service_request_id?: string
+          step?: number
+          storage_path?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_request_photos_service_request_id_fkey"
+            columns: ["service_request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_request_photos_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_request_quote_lines: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          line_total: number
+          quantity: number
+          service_request_id: string
+          sort_order: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          quantity: number
+          service_request_id: string
+          sort_order?: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          quantity?: number
+          service_request_id?: string
+          sort_order?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_request_quote_lines_service_request_id_fkey"
+            columns: ["service_request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_requests: {
+        Row: {
+          address: string
+          assigned_technician_id: string
+          branch_id: string
+          brand_model: string
+          company_name: string
+          completed_at: string | null
+          contact_name: string
+          created_at: string
+          created_by: string
+          current_step: number
+          customer_decision: string
+          customer_statement: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          delivered: boolean
+          delivery_method: string | null
+          device_model_id: string | null
+          device_returned: boolean
+          device_type: string
+          diagnosed_fault: string | null
+          id: string
+          invoice_issued: boolean
+          invoice_number: string | null
+          labor_cost: number | null
+          payment_received: boolean
+          phone: string
+          quote_sent_to_customer: boolean
+          quote_subtotal: number | null
+          quote_total: number | null
+          reported_fault: string
+          request_number: string
+          serial_number: string
+          shipping_cost: number | null
+          status: string
+          technical_inspection_result: string | null
+          under_warranty: boolean
+          updated_at: string
+          vat_option: string | null
+          work_description: string | null
+          wrong_usage_detected: boolean
+        }
+        Insert: {
+          address: string
+          assigned_technician_id: string
+          branch_id: string
+          brand_model: string
+          company_name: string
+          completed_at?: string | null
+          contact_name: string
+          created_at?: string
+          created_by: string
+          current_step?: number
+          customer_decision?: string
+          customer_statement?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          delivered?: boolean
+          delivery_method?: string | null
+          device_model_id?: string | null
+          device_returned?: boolean
+          device_type: string
+          diagnosed_fault?: string | null
+          id?: string
+          invoice_issued?: boolean
+          invoice_number?: string | null
+          labor_cost?: number | null
+          payment_received?: boolean
+          phone: string
+          quote_sent_to_customer?: boolean
+          quote_subtotal?: number | null
+          quote_total?: number | null
+          reported_fault: string
+          request_number: string
+          serial_number: string
+          shipping_cost?: number | null
+          status?: string
+          technical_inspection_result?: string | null
+          under_warranty?: boolean
+          updated_at?: string
+          vat_option?: string | null
+          work_description?: string | null
+          wrong_usage_detected?: boolean
+        }
+        Update: {
+          address?: string
+          assigned_technician_id?: string
+          branch_id?: string
+          brand_model?: string
+          company_name?: string
+          completed_at?: string | null
+          contact_name?: string
+          created_at?: string
+          created_by?: string
+          current_step?: number
+          customer_decision?: string
+          customer_statement?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          delivered?: boolean
+          delivery_method?: string | null
+          device_model_id?: string | null
+          device_returned?: boolean
+          device_type?: string
+          diagnosed_fault?: string | null
+          id?: string
+          invoice_issued?: boolean
+          invoice_number?: string | null
+          labor_cost?: number | null
+          payment_received?: boolean
+          phone?: string
+          quote_sent_to_customer?: boolean
+          quote_subtotal?: number | null
+          quote_total?: number | null
+          reported_fault?: string
+          request_number?: string
+          serial_number?: string
+          shipping_cost?: number | null
+          status?: string
+          technical_inspection_result?: string | null
+          under_warranty?: boolean
+          updated_at?: string
+          vat_option?: string | null
+          work_description?: string | null
+          wrong_usage_detected?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_assigned_technician_id_fkey"
+            columns: ["assigned_technician_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_device_model_id_fkey"
+            columns: ["device_model_id"]
+            isOneToOne: false
+            referencedRelation: "device_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_health_checks: {
         Row: {
           check_name: string
