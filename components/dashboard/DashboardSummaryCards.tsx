@@ -1,11 +1,5 @@
 import Link from "next/link";
-import {
-  AlertTriangle,
-  ClipboardList,
-  FileText,
-  Package,
-  Users,
-} from "lucide-react";
+import { FileText, Package, Users, Wrench } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import type { DashboardSummary } from "@/lib/api/dashboard/types";
@@ -31,11 +25,11 @@ const CARDS = [
     iconClassName: "text-emerald-600 dark:text-emerald-400",
   },
   {
-    key: "openWorkOrders" as const,
-    label: "Açık İş Emri",
-    href: "/work-orders",
-    icon: ClipboardList,
-    iconClassName: "text-amber-600 dark:text-amber-400",
+    key: "openServiceRequests" as const,
+    label: "Açık Servis Talebi",
+    href: "/service-requests",
+    icon: Wrench,
+    iconClassName: "text-orange-600 dark:text-orange-400",
   },
   {
     key: "criticalStockCount" as const,

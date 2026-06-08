@@ -16,32 +16,17 @@ export const reportFilterSchema = z
     branchId: z.string().uuid().optional(),
   })
   .superRefine((value, ctx) => {
-    if (value.period === "custom") {
-      if (!value.dateFrom) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Başlangıç tarihi gerekli",
-          path: ["dateFrom"],
-        });
-      }
-      if (!value.dateTo) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Bitiş tarihi gerekli",
-          path: ["dateTo"],
-        });
-      }
-      if (
-        value.dateFrom &&
-        value.dateTo &&
-        value.dateFrom > value.dateTo
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Başlangıç tarihi bitişten sonra olamaz",
-          path: ["dateTo"],
-        });
-      }
+    if (
+      value.period === "custom" &&
+      value.dateFrom &&
+      value.dateTo &&
+      value.dateFrom > value.dateTo
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Başlangıç tarihi bitişten sonra olamaz",
+        path: ["dateTo"],
+      });
     }
   });
 

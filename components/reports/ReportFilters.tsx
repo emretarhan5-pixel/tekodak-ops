@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import { resolveReportPeriod } from "@/lib/api/reports/report-period";
 import type { ReportFilterOptions } from "@/lib/api/reports/types";
 import {
@@ -108,30 +109,24 @@ export function ReportFilters({
                   <label htmlFor="report-date-from" className="text-sm font-medium">
                     Başlangıç
                   </label>
-                  <input
+                  <DatePicker
                     id="report-date-from"
-                    type="date"
-                    className={selectClassName}
-                    value={filters.dateFrom ?? ""}
+                    value={filters.dateFrom}
                     disabled={isPending}
-                    onChange={(event) =>
-                      push({ dateFrom: event.target.value || undefined })
-                    }
+                    placeholder="Başlangıç tarihi"
+                    onChange={(nextValue) => push({ dateFrom: nextValue })}
                   />
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="report-date-to" className="text-sm font-medium">
                     Bitiş
                   </label>
-                  <input
+                  <DatePicker
                     id="report-date-to"
-                    type="date"
-                    className={selectClassName}
-                    value={filters.dateTo ?? ""}
+                    value={filters.dateTo}
                     disabled={isPending}
-                    onChange={(event) =>
-                      push({ dateTo: event.target.value || undefined })
-                    }
+                    placeholder="Bitiş tarihi"
+                    onChange={(nextValue) => push({ dateTo: nextValue })}
                   />
                 </div>
               </>

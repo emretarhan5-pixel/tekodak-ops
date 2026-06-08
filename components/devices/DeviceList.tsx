@@ -11,6 +11,7 @@ import Link from "next/link";
 import * as React from "react";
 
 import { WarrantyStatusBadge } from "@/components/devices/warranty-status-badge";
+import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Table,
@@ -93,11 +94,29 @@ export function DeviceList({ data }: DeviceListProps) {
       {
         id: "status",
         header: "Durum",
-        cell: ({ row }: CellContext<DeviceListItem, unknown>) => (
-          <span className="text-sm">
-            {DEVICE_STATUS_LABELS[row.original.status]}
-          </span>
-        ),
+        cell: ({ row }: CellContext<DeviceListItem, unknown>) => {
+          const device = row.original;
+          return (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-sm">
+                {DEVICE_STATUS_LABELS[device.status]}
+              </span>
+              {device.is_scrapped ? (
+                <Badge
+                  variant="secondary"
+                  className="bg-muted text-[10px] text-muted-foreground"
+                >
+                  Hek
+                </Badge>
+              ) : null}
+              {device.scrap_status === "pending_approval" ? (
+                <Badge className="border-amber-300 bg-amber-100 text-[10px] text-amber-900 hover:bg-amber-100">
+                  Onay Bekliyor
+                </Badge>
+              ) : null}
+            </div>
+          );
+        },
       },
       {
         id: "actions",

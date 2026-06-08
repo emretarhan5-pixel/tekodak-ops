@@ -8,6 +8,10 @@ import {
   SERVICE_REQUEST_STATUSES,
   SERVICE_REQUEST_VAT_OPTIONS,
 } from "@/lib/constants/service-request";
+import {
+  DEVICE_SCRAP_NEXT_STEPS,
+  DEVICE_SCRAP_REASONS,
+} from "@/lib/constants/device-scrap";
 
 const optionalUuid = z
   .string()
@@ -106,6 +110,72 @@ export const updateServiceRequestStep2Schema = z.object({
   technical_inspection_result: trimmedText("Teknik inceleme sonucu", 10000),
   wrong_usage_detected: z.boolean().default(false),
 });
+
+const step2ScrapFields = {
+  scrap_reason: z.enum(DEVICE_SCRAP_REASONS, {
+    errorMap: () => ({ message: "Hek nedeni seçin" }),
+  }),
+  scrap_notes: z
+    .string()
+    .trim()
+    .min(20, "Hek açıklaması en az 20 karakter olmalıdır")
+    .max(5000),
+  scrap_next_step: z.enum(DEVICE_SCRAP_NEXT_STEPS, {
+    errorMap: () => ({ message: "Müşteriye öneri seçin" }),
+  }),
+};
+
+export const submitServiceRequestScrapFromStep2Schema =
+  updateServiceRequestStep2Schema.extend(step2ScrapFields);
+
+export type SubmitServiceRequestScrapFromStep2Input = z.infer<
+  typeof submitServiceRequestScrapFromStep2Schema
+>;
+
+export const updateServiceRequestStep2FormSchema = z
+  .object({
+    id: z.string().uuid(),
+    diagnosed_fault: trimmedText("Tespit edilen arıza", 10000),
+    customer_statement: trimmedText("Müşteri beyanı", 10000),
+    technical_inspection_result: trimmedText("Teknik inceleme sonucu", 10000),
+    wrong_usage_detected: z.boolean().default(false),
+    mark_as_scrap: z.boolean().default(false),
+    scrap_reason: z.enum(DEVICE_SCRAP_REASONS).optional().nullable(),
+    scrap_notes: z.string().trim().max(5000).optional().nullable(),
+    scrap_next_step: z.enum(DEVICE_SCRAP_NEXT_STEPS).optional().nullable(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.mark_as_scrap) return;
+
+    if (!data.scrap_reason) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Hek nedeni seçin",
+        path: ["scrap_reason"],
+      });
+    }
+
+    const notes = data.scrap_notes?.trim() ?? "";
+    if (notes.length < 20) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Hek açıklaması en az 20 karakter olmalıdır",
+        path: ["scrap_notes"],
+      });
+    }
+
+    if (!data.scrap_next_step) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Müşteriye öneri seçin",
+        path: ["scrap_next_step"],
+      });
+    }
+  });
+
+export type UpdateServiceRequestStep2FormInput = z.infer<
+  typeof updateServiceRequestStep2FormSchema
+>;
 
 export const serviceRequestQuoteLineSchema = z.object({
   description: trimmedText("Parça açıklaması", 500),

@@ -40,6 +40,8 @@ const DETAIL_SELECT = `
   brand_model,
   device_model_id,
   serial_number,
+  device_id,
+  customer_id,
   under_warranty,
   reported_fault,
   assigned_technician_id,
@@ -267,6 +269,19 @@ export async function getServiceRequestById(
       }),
     );
 
+    let resolvedDeviceId = (row as { device_id?: string | null }).device_id ?? null;
+
+    if (!resolvedDeviceId) {
+      const { data: matchedDevice } = await ctx.supabase
+        .from("devices")
+        .select("id")
+        .eq("serial_number", row.serial_number)
+        .is("deleted_at", null)
+        .maybeSingle();
+
+      resolvedDeviceId = matchedDevice?.id ?? null;
+    }
+
     const photos = ((photosRes.data ?? []) as unknown as Array<{
       id: string;
       step: number;
@@ -310,6 +325,7 @@ export async function getServiceRequestById(
       brand_model: row.brand_model,
       device_model_id: row.device_model_id,
       serial_number: row.serial_number,
+      device_id: resolvedDeviceId,
       under_warranty: row.under_warranty,
       reported_fault: row.reported_fault,
       assigned_technician_id: row.assigned_technician_id,

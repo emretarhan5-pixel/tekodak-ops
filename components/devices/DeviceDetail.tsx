@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { DeleteDeviceButton } from "@/components/devices/DeleteDeviceButton";
+import { DeviceScrapApproval } from "@/components/devices/DeviceScrapApproval";
 import { DeviceContracts } from "@/components/devices/DeviceContracts";
 import { DeviceFiles } from "@/components/devices/DeviceFiles";
 import { DeviceWorkOrders } from "@/components/devices/DeviceWorkOrders";
@@ -209,6 +210,19 @@ export function DeviceDetail({
                   <Badge variant={statusBadgeVariant(device.status)}>
                     {DEVICE_STATUS_LABELS[device.status]}
                   </Badge>
+                  {device.is_scrapped ? (
+                    <Badge
+                      variant="secondary"
+                      className="bg-muted text-muted-foreground"
+                    >
+                      Hek
+                    </Badge>
+                  ) : null}
+                  {device.scrap_status === "pending_approval" ? (
+                    <Badge className="border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-100">
+                      Onay Bekliyor
+                    </Badge>
+                  ) : null}
                 </div>
 
                 <p className="text-lg text-muted-foreground">
@@ -293,6 +307,10 @@ export function DeviceDetail({
 
         <div className="space-y-4 pt-4">
           <TabsContent value="general" className="mt-0 space-y-4">
+            {isAdmin && device.scrap_status === "pending_approval" ? (
+              <DeviceScrapApproval device={device} />
+            ) : null}
+
             <Card>
               <CardHeader>
                 <CardTitle>Cihaz bilgileri</CardTitle>

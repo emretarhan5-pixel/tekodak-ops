@@ -12,6 +12,7 @@ import {
 } from "@/lib/api/devices/device-warranty";
 import type { DeviceListItem, DeviceListResult } from "@/lib/api/devices/types";
 import type { DeviceStatus } from "@/lib/constants/device";
+import type { DeviceScrapStatus } from "@/lib/constants/device-scrap";
 import { deviceFilterSchema, type DeviceFilterInput } from "@/schemas/device";
 
 const DEVICE_LIST_SELECT = `
@@ -51,6 +52,8 @@ type RawDeviceRow = {
   status: DeviceStatus;
   warranty_start_date: string | null;
   warranty_end_date: string | null;
+  is_scrapped: boolean;
+  scrap_status: DeviceScrapStatus | null;
   customer_id: string;
   brand_id: string;
   model_id: string;
@@ -85,6 +88,8 @@ function mapRow(row: RawDeviceRow, userId: string): DeviceListItem {
     warranty_end_date: row.warranty_end_date,
     installation_date: row.warranty_start_date,
     is_pinned: (row.device_pins ?? []).some((p) => p.user_id === userId),
+    is_scrapped: row.is_scrapped,
+    scrap_status: row.scrap_status,
   };
 }
 
@@ -157,6 +162,12 @@ export async function getDevices(
     if (filters.warrantyStatus) {
       mapped = mapped.filter((d) =>
         warrantyBadgeMatchesFilter(d.warranty_badge, filters.warrantyStatus!),
+      );
+    }
+
+    if (filters.showScrapped === false) {
+      mapped = mapped.filter(
+        (d) => !d.is_scrapped && d.scrap_status !== "pending_approval",
       );
     }
 

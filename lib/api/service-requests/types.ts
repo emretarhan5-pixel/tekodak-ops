@@ -98,6 +98,7 @@ export type ServiceRequestDetail = {
   brand_model: string;
   device_model_id: string | null;
   serial_number: string;
+  device_id: string | null;
   under_warranty: boolean;
   reported_fault: string;
   assigned_technician_id: string;

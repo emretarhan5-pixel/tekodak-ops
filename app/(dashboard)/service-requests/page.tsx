@@ -1,4 +1,5 @@
 import { ServiceRequestsPageContent } from "@/components/service-requests/service-requests-page-content";
+import { ServiceRequestsPageShell } from "@/components/service-requests/service-requests-page-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { getServiceRequestFilterOptions } from "@/lib/api/service-requests/get-service-request-filter-options";
 import { getServiceRequests } from "@/lib/api/service-requests/get-service-requests";
@@ -43,7 +44,7 @@ export default async function ServiceRequestsPage({
       getServiceRequestFilterOptions(),
     ]);
 
-    return (
+    const content = (
       <ServiceRequestsPageContent
         result={result}
         filterOptions={filterOptions}
@@ -57,6 +58,12 @@ export default async function ServiceRequestsPage({
         hasActiveFilters={hasActiveFilters(resolvedParams)}
       />
     );
+
+    if (user?.role === "staff") {
+      return <ServiceRequestsPageShell>{content}</ServiceRequestsPageShell>;
+    }
+
+    return content;
   } catch (error) {
     const message =
       error instanceof Error

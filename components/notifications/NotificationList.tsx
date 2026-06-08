@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import { OnboardingRestartButton } from "@/components/onboarding/OnboardingRestartButton";
 import { DeleteNotificationButton } from "@/components/notifications/DeleteNotificationButton";
 import { NotificationListItem } from "@/components/notifications/NotificationListItem";
 import { Button } from "@/components/ui/button";
@@ -106,7 +107,7 @@ export function NotificationList({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="group relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Bildirimler</h1>
           <p className="mt-1 text-muted-foreground">
@@ -115,10 +116,12 @@ export function NotificationList({
               : "Tüm bildirimler okundu"}
           </p>
         </div>
+        <div className="flex flex-col items-stretch gap-1 sm:items-end">
         <Button
           type="button"
           variant="outline"
           className="shrink-0 gap-2"
+          data-onboarding-target="notif-tour-mark-all"
           disabled={markingAll || data.unreadCount === 0}
           onClick={handleMarkAllRead}
         >
@@ -129,6 +132,8 @@ export function NotificationList({
           )}
           Tümünü okundu işaretle
         </Button>
+        <OnboardingRestartButton />
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -173,8 +178,11 @@ export function NotificationList({
       </div>
 
       {data.items.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
+        <Card data-onboarding-target="notif-tour-list">
+          <CardContent
+            className="py-12 text-center text-muted-foreground"
+            data-onboarding-target="notif-tour-first-item"
+          >
             {search.status === "unread"
               ? "Okunmamış bildirim yok."
               : search.status === "read"
@@ -185,10 +193,18 @@ export function NotificationList({
           </CardContent>
         </Card>
       ) : (
-        <ul className={cn("space-y-3", isPending && "opacity-60")}>
-          {data.items.map((notification) => (
+        <ul
+          className={cn("space-y-3", isPending && "opacity-60")}
+          data-onboarding-target="notif-tour-list"
+        >
+          {data.items.map((notification, index) => (
             <li key={notification.id}>
-              <div className="flex items-start gap-2">
+              <div
+                className="flex items-start gap-2"
+                {...(index === 0
+                  ? { "data-onboarding-target": "notif-tour-first-item" }
+                  : {})}
+              >
                 <div className="min-w-0 flex-1">
                   <NotificationListItem
                     notification={notification}

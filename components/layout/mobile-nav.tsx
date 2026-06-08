@@ -5,9 +5,8 @@ import { usePathname } from "next/navigation";
 
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import {
-  MAIN_NAV_ITEMS,
-  MOBILE_PRIMARY_NAV,
-  filterNavForRole,
+  getMobileMoreNavForRole,
+  getMobilePrimaryNavForRole,
 } from "@/lib/constants/navigation";
 import { getPermissions } from "@/lib/utils/permissions";
 import { useDashboardUser } from "@/components/providers/dashboard-user-provider";
@@ -26,21 +25,15 @@ export function MobileNav() {
   const { isAdmin } = getPermissions(user);
   const { mobileMoreOpen, setMobileMoreOpen } = useUiStore();
 
-  const moreItems = filterNavForRole(
-    MAIN_NAV_ITEMS.filter(
-      (item) =>
-        !MOBILE_PRIMARY_NAV.some(
-          (m) => m.href === item.href || m.href === "#more",
-        ),
-    ),
-    isAdmin,
-  );
+  const primaryNav = getMobilePrimaryNavForRole(isAdmin);
+  const moreItems = getMobileMoreNavForRole(isAdmin);
+  const hasMoreMenu = moreItems.length > 0;
 
   return (
     <>
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden">
         <ul className="flex items-stretch justify-around">
-          {MOBILE_PRIMARY_NAV.map((item) => {
+          {primaryNav.map((item) => {
             const Icon = item.icon;
             const isMore = item.href === "#more";
             const isActive = isMore
@@ -56,9 +49,7 @@ export function MobileNav() {
                     onClick={() => setMobileMoreOpen(true)}
                     className={cn(
                       "flex w-full flex-col items-center gap-1 px-2 py-2 text-[10px] font-medium",
-                      isActive
-                        ? "text-primary"
-                        : "text-muted-foreground",
+                      isActive ? "text-primary" : "text-muted-foreground",
                     )}
                   >
                     <Icon className="size-5" />
@@ -86,19 +77,21 @@ export function MobileNav() {
         </ul>
       </nav>
 
-      <Sheet open={mobileMoreOpen} onOpenChange={setMobileMoreOpen}>
-        <SheetContent side="bottom" className="h-[70vh] rounded-t-xl">
-          <SheetHeader>
-            <SheetTitle>Menü</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4 overflow-y-auto pb-8">
-            <SidebarNav
-              items={moreItems}
-              onNavigate={() => setMobileMoreOpen(false)}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
+      {hasMoreMenu ? (
+        <Sheet open={mobileMoreOpen} onOpenChange={setMobileMoreOpen}>
+          <SheetContent side="bottom" className="h-[70vh] rounded-t-xl">
+            <SheetHeader>
+              <SheetTitle>Menü</SheetTitle>
+            </SheetHeader>
+            <div className="mt-4 overflow-y-auto pb-8">
+              <SidebarNav
+                items={moreItems}
+                onNavigate={() => setMobileMoreOpen(false)}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      ) : null}
     </>
   );
 }

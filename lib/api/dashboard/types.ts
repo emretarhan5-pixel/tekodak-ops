@@ -1,5 +1,4 @@
 import type { ServiceRequestStatusBadgeVariant } from "@/lib/api/service-requests/service-request-status";
-import type { WorkOrderStatusBadgeVariant } from "@/lib/api/work-orders/work-order-status";
 import type { ContractStatus } from "@/lib/constants/contract";
 import type {
   ServiceRequestStatus,
@@ -8,7 +7,6 @@ import type {
 import type { PartUnit } from "@/lib/constants/stock-item";
 import type { MaintenancePlanStatusBadgeVariant } from "@/lib/constants/maintenance";
 import type { MaintenancePlanStatus } from "@/lib/constants/maintenance";
-import type { WorkOrderStatus, WorkOrderType } from "@/lib/constants/work-order";
 import type { PlannedDateUrgency } from "@/lib/utils/planned-date-urgency";
 
 export type StaffDashboardPlannedDateUrgency = PlannedDateUrgency;
@@ -27,16 +25,6 @@ export type StaffDashboardServiceRequestItem = {
   urgency: StaffDashboardPlannedDateUrgency;
 };
 
-export type StaffDashboardWorkOrderItem = {
-  id: string;
-  work_order_number: string;
-  customer_name: string;
-  work_type: WorkOrderType;
-  scheduled_date: string | null;
-  status: WorkOrderStatus;
-  status_variant: WorkOrderStatusBadgeVariant;
-};
-
 export type StaffDashboardMaintenancePlanItem = {
   id: string;
   contract_number: string;
@@ -53,21 +41,37 @@ export type StaffDashboardSummary = {
   completedServiceRequestsThisMonth: number;
   openServiceRequestsCount: number;
   openMaintenancePlansCount: number;
-  openWorkOrdersCount: number;
+  urgentServiceRequestsCount: number;
+  urgentMaintenancePlansCount: number;
+};
+
+export type StaffDashboardPerformance = {
+  completedThisMonth: number;
+  inProgressCount: number;
+  openTotalCount: number;
+};
+
+export type StaffDashboardActiveTarget = {
+  id: string;
+  name: string;
+  completion_percentage: number;
+  days_remaining: number;
 };
 
 export type StaffDashboardData = {
   userName: string;
+  branchName: string;
   openServiceRequests: StaffDashboardServiceRequestItem[];
   openMaintenancePlans: StaffDashboardMaintenancePlanItem[];
-  openWorkOrders: StaffDashboardWorkOrderItem[];
   summary: StaffDashboardSummary;
+  performance: StaffDashboardPerformance;
+  activeTarget: StaffDashboardActiveTarget | null;
 };
 
 export type DashboardSummary = {
   activeCustomers: number;
   activeContracts: number;
-  openWorkOrders: number;
+  openServiceRequests: number;
   criticalStockCount: number;
 };
 
@@ -91,13 +95,14 @@ export type DashboardStockAlert = {
   unit: PartUnit;
 };
 
-export type DashboardWorkOrderItem = {
+export type DashboardServiceRequestItem = {
   id: string;
-  work_order_number: string;
-  customer_name: string;
-  status: WorkOrderStatus;
-  scheduled_date: string | null;
+  request_number: string;
+  company_name: string;
+  status: ServiceRequestStatus;
+  status_variant: ServiceRequestStatusBadgeVariant;
   created_at: string;
+  updated_at: string;
   assignee_name: string | null;
 };
 
@@ -123,9 +128,9 @@ export type DashboardData = {
   summary: DashboardSummary;
   renewalContracts: DashboardRenewalContract[];
   stockAlerts: DashboardStockAlert[];
-  recentWorkOrders: DashboardWorkOrderItem[];
+  recentServiceRequests: DashboardServiceRequestItem[];
   contractStatusSummary: DashboardContractStatusSummary;
-  todayWorkOrders: DashboardWorkOrderItem[];
+  todayServiceRequests: DashboardServiceRequestItem[];
   activeTargets: DashboardTargetSummaryItem[];
 };
 
@@ -137,12 +142,12 @@ export type RawDashboardContractRow = {
   customers: { name: string } | null;
 };
 
-export type RawDashboardWorkOrderRow = {
+export type RawDashboardServiceRequestRow = {
   id: string;
-  work_order_number: string;
-  status: WorkOrderStatus;
-  scheduled_date: string | null;
+  request_number: string;
+  company_name: string;
+  status: ServiceRequestStatus;
   created_at: string;
-  customers: { name: string } | null;
+  updated_at: string;
   assignee: { full_name: string } | null;
 };

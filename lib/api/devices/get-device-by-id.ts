@@ -8,6 +8,11 @@ import {
 } from "@/lib/api/devices/auth";
 import type { DeviceDetail } from "@/lib/api/devices/types";
 import type { DeviceStatus } from "@/lib/constants/device";
+import type {
+  DeviceScrapNextStep,
+  DeviceScrapReason,
+  DeviceScrapStatus,
+} from "@/lib/constants/device-scrap";
 
 const DEVICE_DETAIL_SELECT = `
   id,
@@ -23,6 +28,19 @@ const DEVICE_DETAIL_SELECT = `
   model_id,
   created_at,
   updated_at,
+  is_scrapped,
+  scrap_status,
+  scrap_reason,
+  scrap_notes,
+  scrap_next_step,
+  scrapped_by,
+  scrapped_at,
+  scrap_approved_by,
+  scrap_approved_at,
+  scrap_rejection_reason,
+  scrapped_user:users!devices_scrapped_by_fkey (
+    full_name
+  ),
   customers!devices_customer_id_fkey!inner (
     id,
     name,
@@ -79,6 +97,17 @@ export async function getDeviceById(deviceId: string): Promise<DeviceDetail> {
       model_id: string;
       created_at: string;
       updated_at: string;
+      is_scrapped: boolean;
+      scrap_status: DeviceScrapStatus | null;
+      scrap_reason: DeviceScrapReason | null;
+      scrap_notes: string | null;
+      scrap_next_step: DeviceScrapNextStep | null;
+      scrapped_by: string | null;
+      scrapped_at: string | null;
+      scrap_approved_by: string | null;
+      scrap_approved_at: string | null;
+      scrap_rejection_reason: string | null;
+      scrapped_user: { full_name: string } | null;
       customers: {
         id: string;
         name: string;
@@ -119,6 +148,17 @@ export async function getDeviceById(deviceId: string): Promise<DeviceDetail> {
       created_at: row.created_at,
       updated_at: row.updated_at,
       is_pinned: (row.device_pins ?? []).some((p) => p.user_id === ctx.user.id),
+      is_scrapped: row.is_scrapped,
+      scrap_status: row.scrap_status,
+      scrap_reason: row.scrap_reason,
+      scrap_notes: row.scrap_notes,
+      scrap_next_step: row.scrap_next_step,
+      scrapped_by: row.scrapped_by,
+      scrapped_by_name: row.scrapped_user?.full_name ?? null,
+      scrapped_at: row.scrapped_at,
+      scrap_approved_by: row.scrap_approved_by,
+      scrap_approved_at: row.scrap_approved_at,
+      scrap_rejection_reason: row.scrap_rejection_reason,
     };
   } catch (error) {
     if (error instanceof DeviceApiError) {

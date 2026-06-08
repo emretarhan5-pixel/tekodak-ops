@@ -6,6 +6,7 @@ import {
   FileText,
   Target,
   Wrench,
+  XCircle,
 } from "lucide-react";
 
 export const NOTIFICATION_TYPES = [
@@ -15,6 +16,9 @@ export const NOTIFICATION_TYPES = [
   "work_order_completed",
   "contract_new",
   "goal_at_risk",
+  "scrap_approval_requested",
+  "scrap_approved",
+  "scrap_rejected",
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -26,6 +30,9 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   work_order_completed: "İş emri tamamlandı",
   contract_new: "Yeni sözleşme",
   goal_at_risk: "Hedef uyarısı",
+  scrap_approval_requested: "Hek onayı",
+  scrap_approved: "Hek onaylandı",
+  scrap_rejected: "Hek reddedildi",
 };
 
 export const NOTIFICATION_TYPE_ICONS: Record<NotificationType, LucideIcon> = {
@@ -35,6 +42,9 @@ export const NOTIFICATION_TYPE_ICONS: Record<NotificationType, LucideIcon> = {
   work_order_completed: CheckCircle2,
   contract_new: ClipboardList,
   goal_at_risk: Target,
+  scrap_approval_requested: AlertTriangle,
+  scrap_approved: CheckCircle2,
+  scrap_rejected: XCircle,
 };
 
 export const NOTIFICATION_READ_STATUSES = ["all", "unread", "read"] as const;

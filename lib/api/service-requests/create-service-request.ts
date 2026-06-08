@@ -8,6 +8,7 @@ import {
 import { revalidateServiceRequestPaths } from "@/lib/api/service-requests/service-request-revalidate-paths";
 import {
   resolveBranchIdForCreate,
+  validateDeviceAvailableForServiceRequest,
   validateDeviceModelId,
 } from "@/lib/api/service-requests/service-request-helpers";
 import type { ActionResult } from "@/lib/api/service-requests/types";
@@ -29,6 +30,7 @@ export async function createServiceRequest(
 
     const branchId = resolveBranchIdForCreate(ctx, input.branch_id);
     await validateDeviceModelId(ctx, input.device_model_id);
+    await validateDeviceAvailableForServiceRequest(ctx, input.serial_number);
 
     const row: TablesInsert<"service_requests"> = {
       request_number: "",

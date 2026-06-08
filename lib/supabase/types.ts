@@ -1199,6 +1199,7 @@ export type Database = {
           deleted_by: string | null
           dimensions: string | null
           id: string
+          is_scrapped: boolean
           location_address: string | null
           location_note: string | null
           manufacturing_year: number | null
@@ -1206,6 +1207,15 @@ export type Database = {
           notes: string | null
           power_watt: number | null
           responsible_user_id: string | null
+          scrap_approved_at: string | null
+          scrap_approved_by: string | null
+          scrap_notes: string | null
+          scrap_next_step: string | null
+          scrap_reason: string | null
+          scrap_rejection_reason: string | null
+          scrap_status: string | null
+          scrapped_at: string | null
+          scrapped_by: string | null
           serial_number: string
           status: string | null
           updated_at: string | null
@@ -1227,6 +1237,7 @@ export type Database = {
           deleted_by?: string | null
           dimensions?: string | null
           id?: string
+          is_scrapped?: boolean
           location_address?: string | null
           location_note?: string | null
           manufacturing_year?: number | null
@@ -1234,6 +1245,15 @@ export type Database = {
           notes?: string | null
           power_watt?: number | null
           responsible_user_id?: string | null
+          scrap_approved_at?: string | null
+          scrap_approved_by?: string | null
+          scrap_notes?: string | null
+          scrap_next_step?: string | null
+          scrap_reason?: string | null
+          scrap_rejection_reason?: string | null
+          scrap_status?: string | null
+          scrapped_at?: string | null
+          scrapped_by?: string | null
           serial_number: string
           status?: string | null
           updated_at?: string | null
@@ -1255,6 +1275,7 @@ export type Database = {
           deleted_by?: string | null
           dimensions?: string | null
           id?: string
+          is_scrapped?: boolean
           location_address?: string | null
           location_note?: string | null
           manufacturing_year?: number | null
@@ -1262,6 +1283,15 @@ export type Database = {
           notes?: string | null
           power_watt?: number | null
           responsible_user_id?: string | null
+          scrap_approved_at?: string | null
+          scrap_approved_by?: string | null
+          scrap_notes?: string | null
+          scrap_next_step?: string | null
+          scrap_reason?: string | null
+          scrap_rejection_reason?: string | null
+          scrap_status?: string | null
+          scrapped_at?: string | null
+          scrapped_by?: string | null
           serial_number?: string
           status?: string | null
           updated_at?: string | null
@@ -2435,11 +2465,13 @@ export type Database = {
           created_by: string
           current_step: number
           customer_decision: string
+          customer_id: string | null
           customer_statement: string | null
           deleted_at: string | null
           deleted_by: string | null
           delivered: boolean
           delivery_method: string | null
+          device_id: string | null
           device_model_id: string | null
           device_returned: boolean
           device_type: string
@@ -2477,11 +2509,13 @@ export type Database = {
           created_by: string
           current_step?: number
           customer_decision?: string
+          customer_id?: string | null
           customer_statement?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           delivered?: boolean
           delivery_method?: string | null
+          device_id?: string | null
           device_model_id?: string | null
           device_returned?: boolean
           device_type: string
@@ -2519,11 +2553,13 @@ export type Database = {
           created_by?: string
           current_step?: number
           customer_decision?: string
+          customer_id?: string | null
           customer_statement?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           delivered?: boolean
           delivery_method?: string | null
+          device_id?: string | null
           device_model_id?: string | null
           device_returned?: boolean
           device_type?: string

@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { filterNavForRole, type NavItem } from "@/lib/constants/navigation";
-import { getPermissions } from "@/lib/utils/permissions";
-import { useDashboardUser } from "@/components/providers/dashboard-user-provider";
+import type { NavItem } from "@/lib/constants/navigation";
 import { cn } from "@/lib/utils";
 
 type SidebarNavProps = {
@@ -20,13 +18,10 @@ export function SidebarNav({
   onNavigate,
 }: SidebarNavProps) {
   const pathname = usePathname() ?? "";
-  const user = useDashboardUser();
-  const { isAdmin } = getPermissions(user);
-  const visibleItems = filterNavForRole(items, isAdmin);
 
   return (
     <nav className="flex flex-1 flex-col gap-1 px-2">
-      {visibleItems.map((item) => {
+      {items.map((item) => {
         const isActive =
           pathname === item.href ||
           (item.href.startsWith("/settings") &&

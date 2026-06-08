@@ -2,8 +2,9 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { MAIN_NAV_ITEMS } from "@/lib/constants/navigation";
+import { getNavItemsForRole } from "@/lib/constants/navigation";
 import { ROLE_LABELS } from "@/lib/constants/roles";
+import { getPermissions } from "@/lib/utils/permissions";
 import { useDashboardUser } from "@/components/providers/dashboard-user-provider";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ type SidebarProps = {
 
 export function Sidebar({ className, onNavigate }: SidebarProps) {
   const user = useDashboardUser();
+  const { isAdmin } = getPermissions(user);
+  const navItems = getNavItemsForRole(isAdmin);
   const { sidebarCollapsed, toggleSidebar } = useUiStore();
 
   const branchLabel =
@@ -52,7 +55,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
 
       <div className="flex flex-1 flex-col py-4">
         <SidebarNav
-          items={MAIN_NAV_ITEMS}
+          items={navItems}
           collapsed={sidebarCollapsed}
           onNavigate={onNavigate}
         />

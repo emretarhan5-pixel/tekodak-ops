@@ -1,17 +1,12 @@
-import Link from "next/link";
-import { Plus } from "lucide-react";
-
 import { ServiceRequestsDataSection } from "@/components/service-requests/service-requests-data-section";
 import { ServiceRequestsEmptyState } from "@/components/service-requests/service-requests-empty-state";
-import { buttonVariants } from "@/components/ui/button";
+import { ServiceRequestsPageHeader } from "@/components/service-requests/service-requests-page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import type {
   ServiceRequestFilterOptions,
   ServiceRequestListResult,
 } from "@/lib/api/service-requests/types";
 import type { ServiceRequestFilterInput } from "@/schemas/service-request";
-import { cn } from "@/lib/utils";
-
 export type ServiceRequestsPageContentProps = {
   result: ServiceRequestListResult;
   filterOptions: ServiceRequestFilterOptions;
@@ -34,24 +29,22 @@ export function ServiceRequestsPageContent({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Servis Talepleri</h1>
-          <p className="mt-1 text-muted-foreground">
-            Müşteri cihaz kaydı, arıza tespiti ve teklif süreci
-          </p>
-        </div>
-        <Link
-          href="/service-requests/new"
-          className={cn(buttonVariants(), "gap-2")}
-        >
-          <Plus className="size-4" />
-          Yeni Servis Talebi
-        </Link>
-      </div>
+      <ServiceRequestsPageHeader />
 
       {showEmpty ? (
-        <ServiceRequestsEmptyState />
+        <>
+          <ServiceRequestsDataSection
+            result={result}
+            filterOptions={filterOptions}
+            filters={filters}
+            showBranchFilter={showBranchFilter}
+            staffBranchLabel={staffBranchLabel}
+            filtersOnly
+          />
+          <div data-onboarding-target="sr-tour-list">
+            <ServiceRequestsEmptyState />
+          </div>
+        </>
       ) : showNoFilterResults ? (
         <>
           <ServiceRequestsDataSection

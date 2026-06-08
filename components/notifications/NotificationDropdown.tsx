@@ -117,6 +117,7 @@ export function NotificationDropdown({
             size="icon"
             className="relative"
             aria-label="Bildirimler"
+            data-onboarding-target="notifications"
           />
         }
       >

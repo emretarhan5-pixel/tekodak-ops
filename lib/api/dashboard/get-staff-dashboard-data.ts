@@ -8,34 +8,26 @@ import {
   toDashboardError,
 } from "@/lib/api/dashboard/auth";
 import { maintenanceStatusVariant } from "@/lib/api/maintenance/maintenance-helpers";
+import { fetchTargetProgressForRow } from "@/lib/api/targets/fetch-target-progress";
 import type {
   StaffDashboardData,
   StaffDashboardMaintenancePlanItem,
   StaffDashboardServiceRequestItem,
-  StaffDashboardWorkOrderItem,
 } from "@/lib/api/dashboard/types";
 import { OPEN_MAINTENANCE_PLAN_STATUSES } from "@/lib/constants/maintenance";
 import type { MaintenancePlanStatus } from "@/lib/constants/maintenance";
 import { getServiceRequestStatusVariant } from "@/lib/api/service-requests/service-request-status";
-import { getWorkOrderStatusVariant } from "@/lib/api/work-orders/work-order-status";
 import {
   OPEN_SERVICE_REQUEST_STATUSES,
   SERVICE_REQUEST_STEP_LABELS,
   type ServiceRequestStatus,
   type ServiceRequestStep,
 } from "@/lib/constants/service-request";
-import type { WorkOrderStatus, WorkOrderType } from "@/lib/constants/work-order";
+import type { TargetStatus } from "@/lib/constants/target";
 import {
   computePlannedDateUrgency,
   computeServiceRequestPlannedDate,
 } from "@/lib/utils/staff-dashboard-planned-date";
-
-const OPEN_WORK_ORDER_STATUSES = [
-  "new",
-  "assigned",
-  "in_progress",
-  "on_hold",
-] as const;
 
 const URGENCY_SORT_ORDER = {
   overdue: 0,
@@ -43,6 +35,12 @@ const URGENCY_SORT_ORDER = {
   warning: 2,
   normal: 3,
 } as const;
+
+const URGENT_URGENCIES = new Set(["overdue", "urgent"]);
+
+function isUrgentUrgency(urgency: keyof typeof URGENCY_SORT_ORDER): boolean {
+  return URGENT_URGENCIES.has(urgency);
+}
 
 type RawServiceRequestRow = {
   id: string;
@@ -53,15 +51,6 @@ type RawServiceRequestRow = {
   status: ServiceRequestStatus;
   current_step: number;
   created_at: string;
-};
-
-type RawWorkOrderRow = {
-  id: string;
-  work_order_number: string;
-  work_type: WorkOrderType;
-  status: WorkOrderStatus;
-  scheduled_date: string | null;
-  customers: { name: string } | null;
 };
 
 type RawMaintenancePlanRow = {
@@ -94,7 +83,9 @@ export async function getStaffDashboardData(): Promise<StaffDashboardData> {
       representation: "date",
     });
 
-    const [serviceRequestsRes, maintenancePlansRes, workOrdersRes, completedRes] =
+    const branchId = ctx.user.branch_id;
+
+    const [serviceRequestsRes, maintenancePlansRes, completedRes, branchRes, targetsRes] =
       await Promise.all([
       ctx.supabase
         .from("service_requests")
@@ -124,23 +115,6 @@ export async function getStaffDashboardData(): Promise<StaffDashboardData> {
         .is("deleted_at", null)
         .order("planned_date", { ascending: true }),
       ctx.supabase
-        .from("work_orders")
-        .select(
-          `
-          id,
-          work_order_number,
-          work_type,
-          status,
-          scheduled_date,
-          customers!work_orders_customer_id_fkey ( name )
-        `,
-        )
-        .eq("assigned_to", userId)
-        .in("status", [...OPEN_WORK_ORDER_STATUSES])
-        .is("deleted_at", null)
-        .order("scheduled_date", { ascending: true, nullsFirst: false })
-        .order("created_at", { ascending: false }),
-      ctx.supabase
         .from("service_requests")
         .select("id", { count: "exact", head: true })
         .eq("assigned_technician_id", userId)
@@ -148,6 +122,23 @@ export async function getStaffDashboardData(): Promise<StaffDashboardData> {
         .is("deleted_at", null)
         .gte("completed_at", `${monthStart}T00:00:00.000Z`)
         .lte("completed_at", `${monthEnd}T23:59:59.999Z`),
+      branchId
+        ? ctx.supabase
+            .from("branches")
+            .select("name")
+            .eq("id", branchId)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      branchId
+        ? ctx.supabase
+            .from("targets")
+            .select("id, name, status, end_date, target_value, final_value")
+            .eq("status", "active")
+            .eq("branch_id", branchId)
+            .order("end_date", { ascending: true })
+            .limit(1)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
       ]);
 
     if (serviceRequestsRes.error) {
@@ -156,11 +147,14 @@ export async function getStaffDashboardData(): Promise<StaffDashboardData> {
     if (maintenancePlansRes.error) {
       throw new Error(maintenancePlansRes.error.message);
     }
-    if (workOrdersRes.error) {
-      throw new Error(workOrdersRes.error.message);
-    }
     if (completedRes.error) {
       throw new Error(completedRes.error.message);
+    }
+    if (branchRes.error) {
+      throw new Error(branchRes.error.message);
+    }
+    if (targetsRes.error) {
+      throw new Error(targetsRes.error.message);
     }
 
     const openServiceRequests = (
@@ -220,31 +214,62 @@ export async function getStaffDashboardData(): Promise<StaffDashboardData> {
         return a.planned_date.localeCompare(b.planned_date);
       });
 
-    const openWorkOrders = (
-      (workOrdersRes.data ?? []) as unknown as RawWorkOrderRow[]
-    ).map(
-      (row): StaffDashboardWorkOrderItem => ({
-        id: row.id,
-        work_order_number: row.work_order_number,
-        customer_name: row.customers?.name ?? "—",
-        work_type: row.work_type,
-        scheduled_date: row.scheduled_date,
-        status: row.status,
-        status_variant: getWorkOrderStatusVariant(row.status),
-      }),
-    );
+    const urgentServiceRequestsCount = openServiceRequests.filter((item) =>
+      isUrgentUrgency(item.urgency),
+    ).length;
+    const urgentMaintenancePlansCount = openMaintenancePlans.filter((item) =>
+      isUrgentUrgency(item.urgency),
+    ).length;
+
+    const inProgressCount =
+      openServiceRequests.filter((item) => item.status === "bakim_yapiliyor")
+        .length +
+      openMaintenancePlans.filter((item) => item.status === "in_progress")
+        .length;
+
+    const openTotalCount =
+      openServiceRequests.length + openMaintenancePlans.length;
+
+    let activeTarget: StaffDashboardData["activeTarget"] = null;
+    const targetRow = targetsRes.data as {
+      id: string;
+      name: string;
+      status: TargetStatus;
+      end_date: string;
+      target_value: number;
+      final_value: number | null;
+    } | null;
+
+    if (targetRow) {
+      const progress = await fetchTargetProgressForRow(ctx.supabase, targetRow);
+      activeTarget = {
+        id: targetRow.id,
+        name: targetRow.name,
+        completion_percentage: progress.completion_percentage,
+        days_remaining: progress.days_remaining,
+      };
+    }
+
+    const branchRow = branchRes.data as { name: string } | null;
 
     return {
       userName: ctx.user.full_name,
+      branchName: branchRow?.name ?? "—",
       openServiceRequests,
       openMaintenancePlans,
-      openWorkOrders,
       summary: {
         completedServiceRequestsThisMonth: completedRes.count ?? 0,
         openServiceRequestsCount: openServiceRequests.length,
         openMaintenancePlansCount: openMaintenancePlans.length,
-        openWorkOrdersCount: openWorkOrders.length,
+        urgentServiceRequestsCount,
+        urgentMaintenancePlansCount,
       },
+      performance: {
+        completedThisMonth: completedRes.count ?? 0,
+        inProgressCount,
+        openTotalCount,
+      },
+      activeTarget,
     };
   } catch (error) {
     if (error instanceof DashboardApiError) {

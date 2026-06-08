@@ -102,7 +102,10 @@ export function ServiceRequestFilters({
   }, [filters, filterOptions, showBranchFilter]);
 
   return (
-    <div className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-xs">
+    <div
+      data-onboarding-target="sr-tour-filters"
+      className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-xs"
+    >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
         <div className="flex-1">
           <label htmlFor="sr-search" className="mb-1.5 block text-sm font-medium">

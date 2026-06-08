@@ -226,6 +226,28 @@ export function DeviceFilters({
           </select>
         </div>
 
+        <div className="grid gap-2 sm:col-span-2 xl:col-span-1">
+          <label className="text-xs font-medium text-muted-foreground">
+            Hek cihazları
+          </label>
+          <label className="flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm shadow-xs">
+            <input
+              type="checkbox"
+              className="size-4 rounded border-border"
+              checked={filters.showScrapped !== false}
+              disabled={isPending}
+              onChange={(e) => {
+                push(
+                  buildParams({
+                    showScrapped: e.target.checked ? "true" : "false",
+                  }),
+                );
+              }}
+            />
+            <span>Hek cihazları göster</span>
+          </label>
+        </div>
+
         <div className="grid gap-2">
           <label className="text-xs font-medium text-muted-foreground">
             Garanti durumu

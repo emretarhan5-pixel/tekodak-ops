@@ -1,6 +1,6 @@
 "use server";
 
-import { formatISO, startOfDay } from "date-fns";
+import { addDays, formatISO, startOfDay } from "date-fns";
 
 import {
   computeContractRenewalBadge,
@@ -15,12 +15,13 @@ import type {
   DashboardContractStatusSummary,
   DashboardData,
   DashboardRenewalContract,
+  DashboardServiceRequestItem,
   DashboardStockAlert,
   DashboardTargetSummaryItem,
-  DashboardWorkOrderItem,
   RawDashboardContractRow,
-  RawDashboardWorkOrderRow,
+  RawDashboardServiceRequestRow,
 } from "@/lib/api/dashboard/types";
+import { getServiceRequestStatusVariant } from "@/lib/api/service-requests/service-request-status";
 import type { TargetStatus } from "@/lib/constants/target";
 import { matchesContractListFilter } from "@/lib/api/contracts/contract-badge";
 import { fetchTargetProgressForRow } from "@/lib/api/targets/fetch-target-progress";
@@ -28,53 +29,49 @@ import { computeTargetDisplayStatus } from "@/lib/api/targets/target-progress-di
 import { isTrackedBranchStockRow } from "@/lib/api/stock/stock-helpers";
 import type { RawCurrentStockRow } from "@/lib/api/stock/stock-list-helpers";
 import type { PartUnit } from "@/lib/constants/stock-item";
-import type { WorkOrderStatus } from "@/lib/constants/work-order";
-
-const OPEN_WORK_ORDER_STATUSES = [
-  "new",
-  "assigned",
-  "in_progress",
-  "on_hold",
-] as const;
+import {
+  OPEN_SERVICE_REQUEST_STATUSES,
+  type ServiceRequestStatus,
+} from "@/lib/constants/service-request";
 
 const RENEWAL_LIST_LIMIT = 8;
 const STOCK_ALERT_LIMIT = 8;
-const RECENT_WORK_ORDER_LIMIT = 5;
+const RECENT_SERVICE_REQUEST_LIMIT = 5;
 const ACTIVE_TARGET_LIMIT = 4;
 
-function mapWorkOrderRow(row: RawDashboardWorkOrderRow): DashboardWorkOrderItem {
+const SERVICE_REQUEST_LIST_SELECT = `
+  id,
+  request_number,
+  company_name,
+  status,
+  created_at,
+  updated_at,
+  assignee:users!service_requests_assigned_technician_id_fkey ( full_name )
+`;
+
+function mapServiceRequestRow(
+  row: RawDashboardServiceRequestRow,
+): DashboardServiceRequestItem {
+  const status = row.status as ServiceRequestStatus;
+
   return {
     id: row.id,
-    work_order_number: row.work_order_number,
-    customer_name: row.customers?.name ?? "—",
-    status: row.status,
-    scheduled_date: row.scheduled_date,
+    request_number: row.request_number,
+    company_name: row.company_name,
+    status,
+    status_variant: getServiceRequestStatusVariant(status),
     created_at: row.created_at,
+    updated_at: row.updated_at,
     assignee_name: row.assignee?.full_name ?? null,
   };
-}
-
-function isOpenWorkOrder(status: WorkOrderStatus): boolean {
-  return (OPEN_WORK_ORDER_STATUSES as readonly string[]).includes(status);
-}
-
-function isTodayWorkOrder(
-  row: RawDashboardWorkOrderRow,
-  todayIso: string,
-): boolean {
-  if (row.status === "in_progress") {
-    return true;
-  }
-  return row.scheduled_date === todayIso && isOpenWorkOrder(row.status);
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
   try {
     const ctx = await getDashboardApiContext();
     const branchId = ctx.branchScope;
-    const todayIso = formatISO(startOfDay(new Date()), {
-      representation: "date",
-    });
+    const todayStart = formatISO(startOfDay(new Date()));
+    const tomorrowStart = formatISO(startOfDay(addDays(new Date(), 1)));
 
     let customersQuery = ctx.supabase
       .from("customers")
@@ -94,22 +91,27 @@ export async function getDashboardData(): Promise<DashboardData> {
       )
       .is("deleted_at", null);
 
-    let workOrdersQuery = ctx.supabase
-      .from("work_orders")
-      .select(
-        `
-        id,
-        work_order_number,
-        status,
-        scheduled_date,
-        created_at,
-        customers!work_orders_customer_id_fkey ( name ),
-        assignee:users!work_orders_assigned_to_fkey ( full_name )
-      `,
-      )
+    let openServiceRequestsQuery = ctx.supabase
+      .from("service_requests")
+      .select("id", { count: "exact", head: true })
+      .in("status", [...OPEN_SERVICE_REQUEST_STATUSES])
+      .is("deleted_at", null);
+
+    let recentServiceRequestsQuery = ctx.supabase
+      .from("service_requests")
+      .select(SERVICE_REQUEST_LIST_SELECT)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
-      .limit(200);
+      .limit(RECENT_SERVICE_REQUEST_LIMIT);
+
+    let todayServiceRequestsQuery = ctx.supabase
+      .from("service_requests")
+      .select(SERVICE_REQUEST_LIST_SELECT)
+      .is("deleted_at", null)
+      .or(
+        `and(created_at.gte.${todayStart},created_at.lt.${tomorrowStart}),and(updated_at.gte.${todayStart},updated_at.lt.${tomorrowStart})`,
+      )
+      .order("updated_at", { ascending: false });
 
     let stockQuery = ctx.supabase.from("current_stock").select("*");
 
@@ -131,7 +133,15 @@ export async function getDashboardData(): Promise<DashboardData> {
     if (branchId) {
       customersQuery = customersQuery.eq("branch_id", branchId);
       contractsQuery = contractsQuery.eq("branch_id", branchId);
-      workOrdersQuery = workOrdersQuery.eq("branch_id", branchId);
+      openServiceRequestsQuery = openServiceRequestsQuery.eq("branch_id", branchId);
+      recentServiceRequestsQuery = recentServiceRequestsQuery.eq(
+        "branch_id",
+        branchId,
+      );
+      todayServiceRequestsQuery = todayServiceRequestsQuery.eq(
+        "branch_id",
+        branchId,
+      );
       stockQuery = stockQuery.eq("branch_id", branchId);
       targetsQuery = targetsQuery.eq("branch_id", branchId);
     }
@@ -139,14 +149,18 @@ export async function getDashboardData(): Promise<DashboardData> {
     const [
       customersRes,
       contractsRes,
-      workOrdersRes,
+      openServiceRequestsRes,
+      recentServiceRequestsRes,
+      todayServiceRequestsRes,
       stockRes,
       branchRes,
       targetsRes,
     ] = await Promise.all([
       customersQuery,
       contractsQuery,
-      workOrdersQuery,
+      openServiceRequestsQuery,
+      recentServiceRequestsQuery,
+      todayServiceRequestsQuery,
       stockQuery,
       branchQuery,
       targetsQuery,
@@ -158,8 +172,14 @@ export async function getDashboardData(): Promise<DashboardData> {
     if (contractsRes.error) {
       throw new Error(contractsRes.error.message);
     }
-    if (workOrdersRes.error) {
-      throw new Error(workOrdersRes.error.message);
+    if (openServiceRequestsRes.error) {
+      throw new Error(openServiceRequestsRes.error.message);
+    }
+    if (recentServiceRequestsRes.error) {
+      throw new Error(recentServiceRequestsRes.error.message);
+    }
+    if (todayServiceRequestsRes.error) {
+      throw new Error(todayServiceRequestsRes.error.message);
     }
     if (stockRes.error) {
       throw new Error(stockRes.error.message);
@@ -172,8 +192,12 @@ export async function getDashboardData(): Promise<DashboardData> {
     }
 
     const contractRows = (contractsRes.data ?? []) as RawDashboardContractRow[];
-    const workOrderRows = (workOrdersRes.data ??
-      []) as RawDashboardWorkOrderRow[];
+    const recentServiceRequests = (
+      (recentServiceRequestsRes.data ?? []) as unknown as RawDashboardServiceRequestRow[]
+    ).map(mapServiceRequestRow);
+    const todayServiceRequests = (
+      (todayServiceRequestsRes.data ?? []) as unknown as RawDashboardServiceRequestRow[]
+    ).map(mapServiceRequestRow);
 
     const contractStatusSummary: DashboardContractStatusSummary = {
       active: 0,
@@ -218,23 +242,6 @@ export async function getDashboardData(): Promise<DashboardData> {
     const activeContracts = contractRows.filter(
       (row) => row.status === "active",
     ).length;
-
-    const openWorkOrders = workOrderRows.filter((row) =>
-      isOpenWorkOrder(row.status),
-    ).length;
-
-    const recentWorkOrders = workOrderRows
-      .slice(0, RECENT_WORK_ORDER_LIMIT)
-      .map(mapWorkOrderRow);
-
-    const todayWorkOrders = workOrderRows
-      .filter((row) => isTodayWorkOrder(row, todayIso))
-      .map(mapWorkOrderRow)
-      .sort((a, b) => {
-        const aScheduled = a.scheduled_date ?? "";
-        const bScheduled = b.scheduled_date ?? "";
-        return aScheduled.localeCompare(bScheduled);
-      });
 
     const partIds = new Set<string>();
     const stockAlerts: DashboardStockAlert[] = [];
@@ -345,14 +352,14 @@ export async function getDashboardData(): Promise<DashboardData> {
       summary: {
         activeCustomers: customersRes.count ?? 0,
         activeContracts,
-        openWorkOrders,
+        openServiceRequests: openServiceRequestsRes.count ?? 0,
         criticalStockCount,
       },
       renewalContracts: renewalContracts.slice(0, RENEWAL_LIST_LIMIT),
       stockAlerts: stockAlerts.slice(0, STOCK_ALERT_LIMIT),
-      recentWorkOrders,
+      recentServiceRequests,
       contractStatusSummary,
-      todayWorkOrders,
+      todayServiceRequests,
       activeTargets,
     };
   } catch (error) {

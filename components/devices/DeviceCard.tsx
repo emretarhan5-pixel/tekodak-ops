@@ -51,9 +51,24 @@ export function DeviceCard({ device }: { device: DeviceListItem }) {
             <WarrantyStatusBadge badge={device.warranty_badge} />
           </dd>
         </div>
-        <div className="flex justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <dt className="text-muted-foreground">Durum</dt>
-          <dd>{DEVICE_STATUS_LABELS[device.status]}</dd>
+          <dd className="flex flex-wrap items-center justify-end gap-1.5">
+            <span>{DEVICE_STATUS_LABELS[device.status]}</span>
+            {device.is_scrapped ? (
+              <Badge
+                variant="secondary"
+                className="bg-muted text-[10px] text-muted-foreground"
+              >
+                Hek
+              </Badge>
+            ) : null}
+            {device.scrap_status === "pending_approval" ? (
+              <Badge className="border-amber-300 bg-amber-100 text-[10px] text-amber-900 hover:bg-amber-100">
+                Onay Bekliyor
+              </Badge>
+            ) : null}
+          </dd>
         </div>
       </dl>
 

@@ -3,10 +3,11 @@ import { reportFilterSchema } from "@/schemas/report";
 type SearchParamValue = string | string[] | undefined;
 
 function first(value: SearchParamValue): string | undefined {
-  if (Array.isArray(value)) {
-    return value[0];
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (raw === undefined || raw === "") {
+    return undefined;
   }
-  return value;
+  return raw;
 }
 
 export function parseReportSearchParams(

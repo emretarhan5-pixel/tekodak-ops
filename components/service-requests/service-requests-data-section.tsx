@@ -18,6 +18,7 @@ type ServiceRequestsDataSectionProps = {
   filters: ServiceRequestFilterInput;
   showBranchFilter: boolean;
   staffBranchLabel?: string;
+  filtersOnly?: boolean;
 };
 
 export function ServiceRequestsDataSection({
@@ -26,6 +27,7 @@ export function ServiceRequestsDataSection({
   filters,
   showBranchFilter,
   staffBranchLabel,
+  filtersOnly = false,
 }: ServiceRequestsDataSectionProps) {
   return (
     <div className="space-y-4">
@@ -38,11 +40,13 @@ export function ServiceRequestsDataSection({
         />
       </Suspense>
 
-      <div className="space-y-4">
-        <ServiceRequestList data={result.data} />
-        <ServiceRequestCardList serviceRequests={result.data} />
-        <ServiceRequestPagination filters={filters} total={result.total} />
-      </div>
+      {filtersOnly ? null : (
+        <div className="space-y-4" data-onboarding-target="sr-tour-list">
+          <ServiceRequestList data={result.data} />
+          <ServiceRequestCardList serviceRequests={result.data} />
+          <ServiceRequestPagination filters={filters} total={result.total} />
+        </div>
+      )}
     </div>
   );
 }

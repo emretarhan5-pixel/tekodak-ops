@@ -29,6 +29,8 @@ export type ServiceRequestRow = {
   device_type: string;
   brand_model: string;
   device_model_id: string | null;
+  device_id: string | null;
+  customer_id: string | null;
   serial_number: string;
   under_warranty: boolean;
   reported_fault: string;
@@ -79,6 +81,48 @@ export function resolveBranchIdForCreate(
   }
 
   return requestedBranchId;
+}
+
+export async function validateDeviceAvailableForServiceRequest(
+  ctx: ServiceRequestApiContext,
+  serialNumber: string,
+): Promise<void> {
+  const normalized = serialNumber.trim();
+  if (!normalized) return;
+
+  const { data, error } = await ctx.supabase
+    .from("devices")
+    .select("id, is_scrapped, scrap_status")
+    .eq("serial_number", normalized)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data) {
+    return;
+  }
+
+  const device = data as {
+    is_scrapped: boolean;
+    scrap_status: string | null;
+  };
+
+  if (device.is_scrapped) {
+    throw new ServiceRequestApiError(
+      "Bu cihaz hek olarak işaretlenmiştir, servis talebi açılamaz",
+      "FORBIDDEN",
+    );
+  }
+
+  if (device.scrap_status === "pending_approval") {
+    throw new ServiceRequestApiError(
+      "Bu cihaz için hek onayı bekliyor, servis talebi açılamaz",
+      "FORBIDDEN",
+    );
+  }
 }
 
 export async function validateDeviceModelId(

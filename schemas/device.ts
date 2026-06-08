@@ -18,6 +18,14 @@ export const deviceFilterSchema = z.object({
   customerId: z.string().uuid().optional(),
   warrantyStatus: z.enum(WARRANTY_FILTER_VALUES).optional(),
   status: z.enum(DEVICE_STATUSES).optional(),
+  showScrapped: z
+    .union([z.literal("true"), z.literal("false"), z.boolean()])
+    .optional()
+    .transform((value) => {
+      if (value === undefined) return true;
+      if (value === false || value === "false") return false;
+      return true;
+    }),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(DEVICE_LIST_PAGE_SIZE),
 });

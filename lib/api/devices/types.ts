@@ -1,5 +1,10 @@
 import type { ContractRenewalBadge, ContractStatus } from "@/lib/constants/contract";
 import type { DeviceStatus } from "@/lib/constants/device";
+import type {
+  DeviceScrapNextStep,
+  DeviceScrapReason,
+  DeviceScrapStatus,
+} from "@/lib/constants/device-scrap";
 
 export type WarrantyBadge = "active" | "warning_90" | "critical_30" | "expired";
 
@@ -20,6 +25,8 @@ export type DeviceListItem = {
   warranty_end_date: string | null;
   installation_date: string | null;
   is_pinned: boolean;
+  is_scrapped: boolean;
+  scrap_status: DeviceScrapStatus | null;
 };
 
 export type DeviceListResult = {
@@ -52,6 +59,17 @@ export type DeviceDetail = {
   created_at: string;
   updated_at: string;
   is_pinned: boolean;
+  is_scrapped: boolean;
+  scrap_status: DeviceScrapStatus | null;
+  scrap_reason: DeviceScrapReason | null;
+  scrap_notes: string | null;
+  scrap_next_step: DeviceScrapNextStep | null;
+  scrapped_by: string | null;
+  scrapped_by_name: string | null;
+  scrapped_at: string | null;
+  scrap_approved_by: string | null;
+  scrap_approved_at: string | null;
+  scrap_rejection_reason: string | null;
 };
 
 export type BrandOption = {

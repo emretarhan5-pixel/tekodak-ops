@@ -19,6 +19,7 @@ function hasActiveFilters(
     "brandId",
     "customerId",
     "warrantyStatus",
+    "showScrapped",
   ] as const;
   return keys.some((key) => {
     const value = params[key];

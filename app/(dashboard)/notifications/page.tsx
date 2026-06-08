@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { NotificationList } from "@/components/notifications/NotificationList";
+import { NotificationsPageShell } from "@/components/notifications/notifications-page-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { getNotifications } from "@/lib/api/notifications/get-notifications";
 import { parseNotificationSearchParams } from "@/lib/api/notifications/parse-notification-search-params";
@@ -32,7 +33,7 @@ export default async function NotificationsRoutePage({
       type: search.type,
     });
 
-    return (
+    const content = (
       <div className="space-y-6">
         <NotificationList
           data={data}
@@ -48,6 +49,12 @@ export default async function NotificationsRoutePage({
         </p>
       </div>
     );
+
+    if (user.role === "staff") {
+      return <NotificationsPageShell>{content}</NotificationsPageShell>;
+    }
+
+    return content;
   } catch (error) {
     const message =
       error instanceof NotificationApiError

@@ -37,6 +37,7 @@ export function parseDeviceSearchParams(
       status && (DEVICE_STATUSES as readonly string[]).includes(status)
         ? (status as (typeof DEVICE_STATUSES)[number])
         : undefined,
+    showScrapped: pickString(params, "showScrapped") ?? "true",
     page: pickString(params, "page") ?? "1",
     pageSize:
       pickString(params, "pageSize") ?? String(DEVICE_LIST_PAGE_SIZE),
