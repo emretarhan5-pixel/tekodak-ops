@@ -8,6 +8,7 @@ import {
   getContractApiContext,
   toActionError,
 } from "@/lib/api/contracts/auth";
+import { resolveContractMaintenanceCount } from "@/lib/api/contracts/resolve-maintenance-count";
 import type { ActionResult } from "@/lib/api/contracts/types";
 import { createContractSchema, type CreateContractInput } from "@/schemas/contract";
 
@@ -118,6 +119,8 @@ export async function createContract(
       return { success: false, error: "Sorumlu kullanıcı bulunamadı" };
     }
 
+    const maintenanceCount = resolveContractMaintenanceCount(input);
+
     const { data: contract, error: insertError } = await ctx.supabase
       .from("contracts")
       .insert({
@@ -133,7 +136,8 @@ export async function createContract(
         minimum_price: input.minimum_price ?? null,
         override_reason: emptyToNull(input.override_reason),
         payment_method: input.payment_method,
-        annual_maintenance_count: input.annual_maintenance_count,
+        annual_maintenance_count: maintenanceCount,
+        total_maintenance_count: maintenanceCount,
         sla_response_hours: input.sla_response_hours,
         parts_included: input.parts_included,
         travel_included: input.travel_included,

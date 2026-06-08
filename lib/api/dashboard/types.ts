@@ -6,13 +6,12 @@ import type {
   ServiceRequestStep,
 } from "@/lib/constants/service-request";
 import type { PartUnit } from "@/lib/constants/stock-item";
+import type { MaintenancePlanStatusBadgeVariant } from "@/lib/constants/maintenance";
+import type { MaintenancePlanStatus } from "@/lib/constants/maintenance";
 import type { WorkOrderStatus, WorkOrderType } from "@/lib/constants/work-order";
+import type { PlannedDateUrgency } from "@/lib/utils/planned-date-urgency";
 
-export type StaffDashboardPlannedDateUrgency =
-  | "normal"
-  | "warning"
-  | "urgent"
-  | "overdue";
+export type StaffDashboardPlannedDateUrgency = PlannedDateUrgency;
 
 export type StaffDashboardServiceRequestItem = {
   id: string;
@@ -38,15 +37,29 @@ export type StaffDashboardWorkOrderItem = {
   status_variant: WorkOrderStatusBadgeVariant;
 };
 
+export type StaffDashboardMaintenancePlanItem = {
+  id: string;
+  contract_number: string;
+  customer_name: string;
+  planned_date: string;
+  days_remaining: number;
+  urgency: StaffDashboardPlannedDateUrgency;
+  device_count: number;
+  status: MaintenancePlanStatus;
+  status_variant: MaintenancePlanStatusBadgeVariant;
+};
+
 export type StaffDashboardSummary = {
   completedServiceRequestsThisMonth: number;
   openServiceRequestsCount: number;
+  openMaintenancePlansCount: number;
   openWorkOrdersCount: number;
 };
 
 export type StaffDashboardData = {
   userName: string;
   openServiceRequests: StaffDashboardServiceRequestItem[];
+  openMaintenancePlans: StaffDashboardMaintenancePlanItem[];
   openWorkOrders: StaffDashboardWorkOrderItem[];
   summary: StaffDashboardSummary;
 };

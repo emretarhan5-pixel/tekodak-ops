@@ -9,6 +9,7 @@ import {
   getContractApiContext,
   toActionError,
 } from "@/lib/api/contracts/auth";
+import { resolveContractMaintenanceCount } from "@/lib/api/contracts/resolve-maintenance-count";
 import type { ActionResult } from "@/lib/api/contracts/types";
 import {
   contractEditFormSchema,
@@ -191,6 +192,8 @@ export async function updateContract(
       }
     }
 
+    const maintenanceCount = resolveContractMaintenanceCount(input);
+
     const { error: updateError } = await ctx.supabase
       .from("contracts")
       .update({
@@ -205,7 +208,8 @@ export async function updateContract(
         minimum_price: input.minimum_price ?? null,
         override_reason: emptyToNull(input.override_reason),
         payment_method: input.payment_method,
-        annual_maintenance_count: input.annual_maintenance_count,
+        annual_maintenance_count: maintenanceCount,
+        total_maintenance_count: maintenanceCount,
         sla_response_hours: input.sla_response_hours,
         parts_included: input.parts_included,
         travel_included: input.travel_included,

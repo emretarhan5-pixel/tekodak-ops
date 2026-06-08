@@ -458,6 +458,7 @@ export type Database = {
         Row: {
           agreed_price: number
           annual_maintenance_count: number | null
+          completed_maintenance_count: number
           branch_id: string
           cancellation_reason: string | null
           cancelled_at: string | null
@@ -485,6 +486,7 @@ export type Database = {
           special_terms: string | null
           start_date: string
           status: string
+          total_maintenance_count: number
           travel_included: boolean | null
           updated_at: string | null
           updated_by: string | null
@@ -495,6 +497,7 @@ export type Database = {
         Insert: {
           agreed_price: number
           annual_maintenance_count?: number | null
+          completed_maintenance_count?: number
           branch_id: string
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -522,6 +525,7 @@ export type Database = {
           special_terms?: string | null
           start_date: string
           status?: string
+          total_maintenance_count?: number
           travel_included?: boolean | null
           updated_at?: string | null
           updated_by?: string | null
@@ -532,6 +536,7 @@ export type Database = {
         Update: {
           agreed_price?: number
           annual_maintenance_count?: number | null
+          completed_maintenance_count?: number
           branch_id?: string
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -559,6 +564,7 @@ export type Database = {
           special_terms?: string | null
           start_date?: string
           status?: string
+          total_maintenance_count?: number
           travel_included?: boolean | null
           updated_at?: string | null
           updated_by?: string | null
@@ -2136,6 +2142,128 @@ export type Database = {
           {
             foreignKeyName: "rewards_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      periodic_maintenance_devices: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          device_id: string
+          id: string
+          is_completed: boolean
+          maintenance_plan_id: string
+          serial_number: string
+          work_notes: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          device_id: string
+          id?: string
+          is_completed?: boolean
+          maintenance_plan_id: string
+          serial_number: string
+          work_notes?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          device_id?: string
+          id?: string
+          is_completed?: boolean
+          maintenance_plan_id?: string
+          serial_number?: string
+          work_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "periodic_maintenance_devices_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodic_maintenance_devices_maintenance_plan_id_fkey"
+            columns: ["maintenance_plan_id"]
+            isOneToOne: false
+            referencedRelation: "periodic_maintenance_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      periodic_maintenance_plans: {
+        Row: {
+          assigned_technician_id: string
+          branch_id: string
+          completed_at: string | null
+          contract_id: string
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          id: string
+          notes: string | null
+          planned_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_technician_id: string
+          branch_id: string
+          completed_at?: string | null
+          contract_id: string
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          planned_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_technician_id?: string
+          branch_id?: string
+          completed_at?: string | null
+          contract_id?: string
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          planned_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "periodic_maintenance_plans_assigned_technician_id_fkey"
+            columns: ["assigned_technician_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodic_maintenance_plans_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodic_maintenance_plans_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodic_maintenance_plans_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]

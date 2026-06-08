@@ -65,6 +65,7 @@ const contractCoreFields = {
     errorMap: () => ({ message: "Ödeme koşulu seçin" }),
   }),
   annual_maintenance_count: z.coerce.number().int().min(0).default(0),
+  total_maintenance_count: z.coerce.number().int().min(0).default(0),
   sla_response_hours: z.coerce.number().int().min(1).default(48),
   parts_included: z.boolean().default(true),
   travel_included: z.boolean().default(true),

@@ -83,6 +83,8 @@ export type ContractDetail = {
   renewal_badge: ContractRenewalBadge;
   days_remaining: number;
   annual_maintenance_count: number;
+  total_maintenance_count: number;
+  completed_maintenance_count: number;
   sla_response_hours: number;
   parts_included: boolean;
   travel_included: boolean;

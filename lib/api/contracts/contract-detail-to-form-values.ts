@@ -17,6 +17,7 @@ export function contractDetailToFormValues(
     override_reason: contract.override_reason,
     payment_method: contract.payment_method,
     annual_maintenance_count: contract.annual_maintenance_count,
+    total_maintenance_count: contract.total_maintenance_count,
     sla_response_hours: contract.sla_response_hours,
     parts_included: contract.parts_included,
     travel_included: contract.travel_included,

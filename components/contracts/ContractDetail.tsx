@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { ContractFiles } from "@/components/contracts/ContractFiles";
+import { ContractMaintenancePlan } from "@/components/contracts/ContractMaintenancePlan";
 import { ContractWorkOrders } from "@/components/contracts/ContractWorkOrders";
 import { ContractRenewalBadgeDisplay } from "@/components/contracts/contract-renewal-badge";
 import { DeleteContractButton } from "@/components/contracts/DeleteContractButton";
@@ -37,6 +38,7 @@ import type {
   GetContractFileDownloadUrlAction,
   UploadContractFileAction,
 } from "@/lib/api/contracts/types";
+import type { MaintenancePlanListItem } from "@/lib/api/maintenance/types";
 import type { WorkOrderListItem } from "@/lib/api/work-orders/types";
 import {
   CONTRACT_PAYMENT_METHOD_LABELS,
@@ -49,6 +51,7 @@ import { cn } from "@/lib/utils";
 const TAB_OPTIONS = [
   { value: "general", label: "Genel" },
   { value: "devices", label: "Kapsanan Cihazlar" },
+  { value: "maintenance", label: "Bakım Planı" },
   { value: "work-history", label: "İş Geçmişi" },
   { value: "files", label: "Dosyalar" },
 ] as const;
@@ -63,10 +66,12 @@ const selectClassName = cn(
 type ContractDetailProps = {
   contract: ContractDetailData;
   workOrders: WorkOrderListItem[];
+  maintenancePlans: MaintenancePlanListItem[];
   files: ContractFileRow[];
   currentUserId: string;
   isAdmin: boolean;
   canEdit: boolean;
+  initialTab?: TabValue;
   uploadFileAction: UploadContractFileAction;
   deleteFileAction: DeleteContractFileAction;
   getDownloadUrlAction: GetContractFileDownloadUrlAction;
@@ -160,17 +165,19 @@ function boolLabel(value: boolean): string {
 export function ContractDetail({
   contract,
   workOrders,
+  maintenancePlans,
   files,
   currentUserId,
   isAdmin,
   canEdit,
+  initialTab,
   uploadFileAction,
   deleteFileAction,
   getDownloadUrlAction,
   deleteContractAction,
   getDeletionImpactAction,
 }: ContractDetailProps) {
-  const [activeTab, setActiveTab] = useState<TabValue>("general");
+  const [activeTab, setActiveTab] = useState<TabValue>(initialTab ?? "general");
 
   const priceLabel = formatContractPrice(
     contract.agreed_price,
@@ -282,6 +289,7 @@ export function ContractDetail({
             <TabsList className="hidden w-full md:inline-flex">
               <TabsTrigger value="general">📋 Genel</TabsTrigger>
               <TabsTrigger value="devices">🖨️ Kapsanan Cihazlar</TabsTrigger>
+              <TabsTrigger value="maintenance">🔧 Bakım Planı</TabsTrigger>
               <TabsTrigger value="work-history">🛠️ İş Geçmişi</TabsTrigger>
               <TabsTrigger value="files">📎 Dosyalar</TabsTrigger>
             </TabsList>
@@ -393,8 +401,12 @@ export function ContractDetail({
               <CardContent>
                 <dl className="space-y-3">
                   <InfoRow
-                    label="Yıllık bakım sayısı"
-                    value={String(contract.annual_maintenance_count)}
+                    label="Yıllık bakım sayısı (toplam)"
+                    value={String(contract.total_maintenance_count)}
+                  />
+                  <InfoRow
+                    label="Tamamlanan bakım"
+                    value={String(contract.completed_maintenance_count)}
                   />
                   <InfoRow
                     label="SLA yanıt (saat)"
@@ -494,6 +506,16 @@ export function ContractDetail({
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="maintenance" className="mt-0">
+            <ContractMaintenancePlan
+              contract={contract}
+              maintenancePlans={maintenancePlans}
+              canEdit={canEdit}
+              currentUserId={currentUserId}
+              isAdmin={isAdmin}
+            />
           </TabsContent>
 
           <TabsContent value="work-history" className="mt-0">

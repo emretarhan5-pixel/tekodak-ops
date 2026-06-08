@@ -81,6 +81,7 @@ function emptyFormValues(responsibleUserId: string): ContractFormValues {
     override_reason: null,
     payment_method: "annual_prepaid",
     annual_maintenance_count: 0,
+    total_maintenance_count: 0,
     sla_response_hours: 48,
     parts_included: true,
     travel_included: true,
@@ -283,7 +284,12 @@ export function ContractForm({
     setIsSubmitting(true);
 
     try {
-      const result = await createContract({ ...values, status });
+      const syncedValues = {
+        ...values,
+        annual_maintenance_count: values.total_maintenance_count,
+        status,
+      };
+      const result = await createContract(syncedValues);
 
       if (!result.success) {
         toast.error(result.error ?? "Sözleşme kaydedilemedi");
@@ -317,6 +323,7 @@ export function ContractForm({
     try {
       const payload: ContractEditFormValues = {
         ...values,
+        annual_maintenance_count: values.total_maintenance_count,
         id: contractId,
         status: preservedStatus,
       };
@@ -530,7 +537,7 @@ export function ContractForm({
         </CardHeader>
         <CardContent>
           <FieldGroup className="gap-5">
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               <Field>
                 <FieldLabel htmlFor="agreed_price">Tutar *</FieldLabel>
                 <Input
@@ -558,6 +565,30 @@ export function ContractForm({
                   ))}
                 </select>
                 <FieldError errors={[errors.currency]} />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="total_maintenance_count">
+                  Yıllık Bakım Sayısı (Toplam)
+                </FieldLabel>
+                <Input
+                  id="total_maintenance_count"
+                  type="number"
+                  min={0}
+                  step={1}
+                  className="h-10"
+                  {...register("total_maintenance_count", {
+                    valueAsNumber: true,
+                    onChange: (event) => {
+                      const raw = event.target.value;
+                      const value = raw === "" ? 0 : Number(raw);
+                      setValue("annual_maintenance_count", value, {
+                        shouldDirty: true,
+                      });
+                    },
+                  })}
+                />
+                <FieldError errors={[errors.total_maintenance_count]} />
               </Field>
             </div>
 

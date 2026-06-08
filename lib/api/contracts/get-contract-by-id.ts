@@ -29,6 +29,8 @@ const CONTRACT_DETAIL_SELECT = `
   end_date,
   status,
   annual_maintenance_count,
+  total_maintenance_count,
+  completed_maintenance_count,
   sla_response_hours,
   parts_included,
   travel_included,
@@ -92,6 +94,8 @@ export async function getContractById(
       end_date: string;
       status: ContractStatus;
       annual_maintenance_count: number | null;
+      total_maintenance_count: number | null;
+      completed_maintenance_count: number | null;
       sla_response_hours: number | null;
       parts_included: boolean | null;
       travel_included: boolean | null;
@@ -211,6 +215,8 @@ export async function getContractById(
       renewal_badge: computeContractRenewalBadge(status, row.end_date),
       days_remaining,
       annual_maintenance_count: row.annual_maintenance_count ?? 0,
+      total_maintenance_count: row.total_maintenance_count ?? 0,
+      completed_maintenance_count: row.completed_maintenance_count ?? 0,
       sla_response_hours: row.sla_response_hours ?? 48,
       parts_included: row.parts_included ?? true,
       travel_included: row.travel_included ?? true,
