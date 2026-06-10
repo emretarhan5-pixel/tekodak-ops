@@ -27,8 +27,15 @@ export function DashboardShell({
       </div>
 
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-        <SheetContent side="left" className="w-[280px] p-0" showCloseButton>
-          <Sidebar onNavigate={() => setMobileSidebarOpen(false)} />
+        <SheetContent
+          side="left"
+          className="w-[280px] gap-0 p-0 [&_[data-slot=sheet-close]]:top-2 [&_[data-slot=sheet-close]]:right-2"
+          showCloseButton
+        >
+          <Sidebar
+            isMobileDrawer
+            onNavigate={() => setMobileSidebarOpen(false)}
+          />
         </SheetContent>
       </Sheet>
 

@@ -14,9 +14,14 @@ import { cn } from "@/lib/utils";
 type SidebarProps = {
   className?: string;
   onNavigate?: () => void;
+  isMobileDrawer?: boolean;
 };
 
-export function Sidebar({ className, onNavigate }: SidebarProps) {
+export function Sidebar({
+  className,
+  onNavigate,
+  isMobileDrawer = false,
+}: SidebarProps) {
   const user = useDashboardUser();
   const { isAdmin } = getPermissions(user);
   const navItems = getNavItemsForRole(isAdmin);
@@ -35,25 +40,32 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
         className,
       )}
     >
+      {!isMobileDrawer ? (
+        <div
+          className={cn(
+            "flex h-14 shrink-0 items-center border-b border-border px-4",
+            sidebarCollapsed && "justify-center px-2",
+          )}
+        >
+          {sidebarCollapsed ? (
+            <span className="text-sm font-bold tracking-tight">T</span>
+          ) : (
+            <div>
+              <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
+                TEKODAK
+              </p>
+              <p className="text-sm font-semibold">OPS</p>
+            </div>
+          )}
+        </div>
+      ) : null}
+
       <div
         className={cn(
-          "flex h-14 shrink-0 items-center border-b border-border px-4",
-          sidebarCollapsed && "justify-center px-2",
+          "flex flex-1 flex-col py-4",
+          isMobileDrawer && "pt-11",
         )}
       >
-        {sidebarCollapsed ? (
-          <span className="text-sm font-bold tracking-tight">T</span>
-        ) : (
-          <div>
-            <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
-              TEKODAK
-            </p>
-            <p className="text-sm font-semibold">OPS</p>
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-1 flex-col py-4">
         <SidebarNav
           items={navItems}
           collapsed={sidebarCollapsed}
@@ -62,31 +74,35 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       </div>
 
       <div className="mt-auto border-t border-border p-3">
-        {!sidebarCollapsed ? (
-          <div className="mb-3 px-2 text-xs text-muted-foreground">
+        {!sidebarCollapsed || isMobileDrawer ? (
+          <div className={cn("px-2 text-xs text-muted-foreground", !isMobileDrawer && "mb-3")}>
             <p className="font-medium text-foreground">{user.full_name}</p>
             <p>
               {ROLE_LABELS[user.role]} · {branchLabel}
             </p>
           </div>
         ) : null}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className={cn("w-full", sidebarCollapsed && "px-0")}
-          onClick={toggleSidebar}
-          aria-label={sidebarCollapsed ? "Kenar çubuğunu genişlet" : "Kenar çubuğunu daralt"}
-        >
-          {sidebarCollapsed ? (
-            <ChevronRight className="size-4" />
-          ) : (
-            <>
-              <ChevronLeft className="size-4" />
-              <span>Daralt</span>
-            </>
-          )}
-        </Button>
+        {!isMobileDrawer ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className={cn("w-full", sidebarCollapsed && "px-0")}
+            onClick={toggleSidebar}
+            aria-label={
+              sidebarCollapsed ? "Kenar çubuğunu genişlet" : "Kenar çubuğunu daralt"
+            }
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight className="size-4" />
+            ) : (
+              <>
+                <ChevronLeft className="size-4" />
+                <span>Daralt</span>
+              </>
+            )}
+          </Button>
+        ) : null}
       </div>
     </aside>
   );
