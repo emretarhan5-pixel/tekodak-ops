@@ -1,9 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Search, UserPlus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -23,9 +23,19 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { checkTaxNumber } from "@/lib/api/service-requests/check-tax-number";
 import { createServiceRequest } from "@/lib/api/service-requests/create-service-request";
+import { getServiceRequestCustomerDevices } from "@/lib/api/service-requests/get-service-request-customer-devices";
+import { getServiceRequestCustomerSnapshot } from "@/lib/api/service-requests/get-service-request-customer-snapshot";
 import type {
+  CheckTaxNumberCustomer,
   ServiceRequestFormBranchOption,
+  ServiceRequestFormCustomerOption,
   ServiceRequestFormDeviceModelOption,
 } from "@/lib/api/service-requests/types";
 import { cn } from "@/lib/utils";
@@ -47,6 +57,7 @@ const selectClassName = cn(
 
 type ServiceRequestStep1FormProps = {
   branches: ServiceRequestFormBranchOption[];
+  customers: ServiceRequestFormCustomerOption[];
   deviceModels: ServiceRequestFormDeviceModelOption[];
   technicianName: string;
   isAdmin: boolean;
@@ -56,6 +67,9 @@ type ServiceRequestStep1FormProps = {
 function emptyValues(defaultBranchId?: string | null): ServiceRequestStep1FormValues {
   return {
     branch_id: defaultBranchId ?? "",
+    customer_mode: "registered",
+    customer_id: null,
+    tax_number: "",
     brand_model_mode: "catalog",
     company_name: "",
     contact_name: "",
@@ -72,6 +86,7 @@ function emptyValues(defaultBranchId?: string | null): ServiceRequestStep1FormVa
 
 export function ServiceRequestStep1Form({
   branches,
+  customers,
   deviceModels,
   technicianName,
   isAdmin,
@@ -81,7 +96,17 @@ export function ServiceRequestStep1Form({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modelOpen, setModelOpen] = useState(false);
   const [modelQuery, setModelQuery] = useState("");
-  const modelPickerRef = useRef<HTMLDivElement>(null);
+  const [customerModeChosen, setCustomerModeChosen] = useState(false);
+  const [customerOpen, setCustomerOpen] = useState(false);
+  const [customerQuery, setCustomerQuery] = useState("");
+
+  const [customerModelIds, setCustomerModelIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [checkingTaxNumber, setCheckingTaxNumber] = useState(false);
+  const [duplicateMatch, setDuplicateMatch] =
+    useState<CheckTaxNumberCustomer | null>(null);
+  const [duplicateDismissed, setDuplicateDismissed] = useState(false);
 
   const {
     register,
@@ -89,23 +114,204 @@ export function ServiceRequestStep1Form({
     handleSubmit,
     watch,
     setValue,
+    resetField,
     formState: { errors },
   } = useForm<ServiceRequestStep1FormValues>({
     resolver: zodResolver(serviceRequestStep1FormSchema),
     defaultValues: emptyValues(defaultBranchId),
   });
 
+  const customerMode = watch("customer_mode");
+  const customerId = watch("customer_id");
   const brandModelMode = watch("brand_model_mode");
+  const selectedBranchId = watch("branch_id");
+  const isRegisteredCustomer = customerMode === "registered";
+  const hasSelectedCustomer = Boolean(customerId);
+  const customerFieldsReadOnly = isRegisteredCustomer && hasSelectedCustomer;
+
+  const scopedCustomers = useMemo(() => {
+    if (!isAdmin || !selectedBranchId) {
+      return customers;
+    }
+    return customers.filter((customer) => customer.branch_id === selectedBranchId);
+  }, [customers, isAdmin, selectedBranchId]);
+
+  const filteredCustomers = useMemo(() => {
+    const query = customerQuery.trim().toLocaleLowerCase("tr-TR");
+    if (!query) {
+      return scopedCustomers.slice(0, 50);
+    }
+    return scopedCustomers
+      .filter((customer) =>
+        customer.name.toLocaleLowerCase("tr-TR").includes(query),
+      )
+      .slice(0, 50);
+  }, [customerQuery, scopedCustomers]);
 
   const filteredModels = useMemo(() => {
-    const q = modelQuery.trim().toLocaleLowerCase("tr-TR");
-    if (!q) return deviceModels.slice(0, 50);
-    return deviceModels
-      .filter((model) => model.label.toLocaleLowerCase("tr-TR").includes(q))
-      .slice(0, 50);
+    const query = modelQuery.trim().toLocaleLowerCase("tr-TR");
+    const source = query
+      ? deviceModels.filter((model) =>
+          model.label.toLocaleLowerCase("tr-TR").includes(query),
+        )
+      : deviceModels;
+    return source.slice(0, 80);
   }, [deviceModels, modelQuery]);
 
+  const customerModels = useMemo(
+    () => filteredModels.filter((model) => customerModelIds.has(model.id)),
+    [filteredModels, customerModelIds],
+  );
+
+  const otherModels = useMemo(
+    () => filteredModels.filter((model) => !customerModelIds.has(model.id)),
+    [filteredModels, customerModelIds],
+  );
+
+  useEffect(() => {
+    if (!customerId) {
+      setCustomerModelIds(new Set());
+      return;
+    }
+
+    let cancelled = false;
+
+    getServiceRequestCustomerDevices(customerId)
+      .then((devices) => {
+        if (cancelled) return;
+        setCustomerModelIds(
+          new Set(devices.map((device) => device.model_id).filter(Boolean)),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCustomerModelIds(new Set());
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [customerId]);
+
+  async function applyCustomerSnapshot(id: string) {
+    try {
+      const snapshot = await getServiceRequestCustomerSnapshot(id);
+      setValue("customer_id", snapshot.customer_id);
+      setValue("company_name", snapshot.company_name);
+      setValue("contact_name", snapshot.contact_name);
+      setValue("phone", snapshot.phone);
+      setValue("address", snapshot.address);
+      setCustomerQuery(snapshot.company_name);
+      setDuplicateMatch(null);
+      setDuplicateDismissed(false);
+    } catch {
+      toast.error("Müşteri bilgileri yüklenemedi");
+    }
+  }
+
+  async function handleSelectCustomer(id: string, name: string) {
+    setValue("customer_id", id);
+    setCustomerQuery(name);
+    setCustomerOpen(false);
+    await applyCustomerSnapshot(id);
+  }
+
+  function clearRegisteredCustomer() {
+    setValue("customer_id", null);
+    setCustomerQuery("");
+    resetField("company_name");
+    resetField("contact_name");
+    resetField("phone");
+    resetField("address");
+    setCustomerModelIds(new Set());
+  }
+
+  function switchCustomerMode(mode: "registered" | "new") {
+    setCustomerModeChosen(true);
+    setValue("customer_mode", mode);
+    setValue("customer_id", null);
+    setValue("tax_number", "");
+    resetField("company_name");
+    resetField("contact_name");
+    resetField("phone");
+    resetField("address");
+    setCustomerQuery("");
+    setDuplicateMatch(null);
+    setDuplicateDismissed(false);
+    setCustomerModelIds(new Set());
+  }
+
+  async function handleTaxNumberBlur() {
+    if (customerMode !== "new") return;
+
+    const taxNumber = watch("tax_number")?.trim() ?? "";
+    if (!taxNumber) {
+      setDuplicateMatch(null);
+      return;
+    }
+
+    setCheckingTaxNumber(true);
+    try {
+      const branchId = selectedBranchId?.trim() || undefined;
+      const result = await checkTaxNumber(taxNumber, branchId);
+      if (!result.found) {
+        if ("error" in result && result.error) {
+          toast.error(result.error);
+        }
+        setDuplicateMatch(null);
+        return;
+      }
+      setDuplicateMatch(result.customer);
+      setDuplicateDismissed(false);
+    } catch (error) {
+      console.error("[handleTaxNumberBlur] checkTaxNumber istemci hatası:", error);
+      toast.error("Vergi numarası kontrol edilemedi");
+    } finally {
+      setCheckingTaxNumber(false);
+    }
+  }
+
+  async function handleUseDuplicateCustomer() {
+    if (!duplicateMatch) return;
+    setValue("customer_mode", "registered");
+    await handleSelectCustomer(duplicateMatch.id, duplicateMatch.name);
+  }
+
+  function renderModelOption(
+    model: ServiceRequestFormDeviceModelOption,
+    selectedId: string | null,
+    onSelect: (model: ServiceRequestFormDeviceModelOption) => void,
+  ) {
+    return (
+      <li key={model.id}>
+        <button
+          type="button"
+          role="option"
+          className={cn(
+            "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted",
+            selectedId === model.id && "bg-muted/60",
+          )}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => onSelect(model)}
+        >
+          {selectedId === model.id ? (
+            <Check className="size-4 shrink-0 text-primary" />
+          ) : (
+            <span className="size-4 shrink-0" />
+          )}
+          {model.label}
+        </button>
+      </li>
+    );
+  }
+
   async function onSubmit(values: ServiceRequestStep1FormValues) {
+    if (!customerModeChosen) {
+      toast.error("Lütfen müşteri seçim yöntemini belirleyin");
+      return;
+    }
+
     if (isAdmin && !values.branch_id) {
       toast.error("Şube seçimi zorunludur");
       return;
@@ -115,6 +321,8 @@ export function ServiceRequestStep1Form({
     try {
       const result = await createServiceRequest({
         branch_id: isAdmin ? values.branch_id || undefined : undefined,
+        customer_id:
+          values.customer_mode === "registered" ? values.customer_id : null,
         company_name: values.company_name,
         contact_name: values.contact_name,
         phone: values.phone,
@@ -175,71 +383,329 @@ export function ServiceRequestStep1Form({
         </Card>
       ) : null}
 
-      <Card>
+      <Card className="overflow-visible">
         <CardHeader>
           <CardTitle>Müşteri bilgileri</CardTitle>
+          <CardDescription>Müşteri sistemde kayıtlı mı?</CardDescription>
         </CardHeader>
-        <CardContent>
-          <FieldGroup className="gap-5">
-            <Field>
-              <FieldLabel htmlFor="company_name">Firma / Kurum *</FieldLabel>
-              <Input
-                id="company_name"
-                className="h-10"
+        <CardContent className="space-y-5 overflow-visible">
+          {!customerModeChosen ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Button
+                type="button"
+                className="h-12 min-h-11 w-full justify-center gap-2"
                 disabled={isSubmitting}
-                {...register("company_name")}
-              />
-              <FieldError errors={[errors.company_name]} />
-            </Field>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field>
-                <FieldLabel htmlFor="contact_name">Ad Soyad *</FieldLabel>
-                <Input
-                  id="contact_name"
-                  className="h-10"
-                  disabled={isSubmitting}
-                  {...register("contact_name")}
-                />
-                <FieldError errors={[errors.contact_name]} />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="phone">Telefon *</FieldLabel>
-                <Input
-                  id="phone"
-                  type="tel"
-                  className="h-10"
-                  disabled={isSubmitting}
-                  {...register("phone")}
-                />
-                <FieldError errors={[errors.phone]} />
-              </Field>
+                onClick={() => switchCustomerMode("registered")}
+              >
+                <Search className="size-4" />
+                Kayıtlı Müşteri Seç
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12 min-h-11 w-full justify-center gap-2"
+                disabled={isSubmitting}
+                onClick={() => switchCustomerMode("new")}
+              >
+                <UserPlus className="size-4" />
+                Yeni Müşteri
+              </Button>
             </div>
-            <Field>
-              <FieldLabel htmlFor="address">Adres *</FieldLabel>
-              <textarea
-                id="address"
-                className={textareaClassName}
-                rows={3}
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={isRegisteredCustomer ? "default" : "outline"}
                 disabled={isSubmitting}
-                {...register("address")}
+                onClick={() => switchCustomerMode("registered")}
+              >
+                Kayıtlı müşteri
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={!isRegisteredCustomer ? "default" : "outline"}
+                disabled={isSubmitting}
+                onClick={() => switchCustomerMode("new")}
+              >
+                Yeni müşteri
+              </Button>
+            </div>
+          )}
+
+          {customerModeChosen && isRegisteredCustomer ? (
+            <Field>
+              <FieldLabel>Müşteri *</FieldLabel>
+              <Controller
+                control={control}
+                name="customer_id"
+                render={({ field }) => (
+                  <Popover
+                    open={customerOpen}
+                    onOpenChange={(open, details) => {
+                      if (!open && details.reason === "trigger-press") {
+                        return;
+                      }
+                      setCustomerOpen(open);
+                    }}
+                    modal={false}
+                  >
+                    <PopoverTrigger
+                      nativeButton={false}
+                      render={<div className="relative w-full" />}
+                    >
+                      <Input
+                        className="h-11 pr-20"
+                        placeholder="Firma adı ile ara…"
+                        value={customerQuery}
+                        disabled={isSubmitting}
+                        onChange={(event) => {
+                          setCustomerQuery(event.target.value);
+                          setCustomerOpen(true);
+                          if (!event.target.value.trim()) {
+                            field.onChange(null);
+                            resetField("company_name");
+                            resetField("contact_name");
+                            resetField("phone");
+                            resetField("address");
+                          }
+                        }}
+                        onFocus={() => setCustomerOpen(true)}
+                        autoComplete="off"
+                      />
+                      <div className="pointer-events-none absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-1">
+                        {hasSelectedCustomer ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            className="pointer-events-auto"
+                            aria-label="Müşteri seçimini temizle"
+                            disabled={isSubmitting}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={clearRegisteredCustomer}
+                          >
+                            <X className="size-4" />
+                          </Button>
+                        ) : null}
+                        <ChevronsUpDown className="size-4 text-muted-foreground" />
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      align="start"
+                      side="bottom"
+                      sideOffset={4}
+                      className="z-50 max-h-56 w-(--anchor-width) overflow-auto p-0"
+                    >
+                      {filteredCustomers.length > 0 ? (
+                        <ul role="listbox">
+                          {filteredCustomers.map((customer) => (
+                            <li key={customer.id}>
+                              <button
+                                type="button"
+                                role="option"
+                                className={cn(
+                                  "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted",
+                                  field.value === customer.id && "bg-muted/60",
+                                )}
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() =>
+                                  void handleSelectCustomer(
+                                    customer.id,
+                                    customer.name,
+                                  )
+                                }
+                              >
+                                {field.value === customer.id ? (
+                                  <Check className="size-4 shrink-0 text-primary" />
+                                ) : (
+                                  <span className="size-4 shrink-0" />
+                                )}
+                                {customer.name}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="px-3 py-2 text-sm text-muted-foreground">
+                          {customerQuery.trim()
+                            ? "Eşleşen müşteri bulunamadı"
+                            : scopedCustomers.length === 0
+                              ? "Bu şubede kayıtlı müşteri bulunamadı"
+                              : "Müşteri bulunamadı"}
+                        </p>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                )}
               />
-              <FieldError errors={[errors.address]} />
+              <FieldError errors={[errors.customer_id]} />
             </Field>
-          </FieldGroup>
+          ) : null}
+
+          {customerModeChosen && !isRegisteredCustomer ? (
+            <Field>
+              <FieldLabel htmlFor="tax_number">Vergi No *</FieldLabel>
+              <Input
+                id="tax_number"
+                className="h-11"
+                inputMode="numeric"
+                disabled={isSubmitting || checkingTaxNumber}
+                {...register("tax_number")}
+                onBlur={() => void handleTaxNumberBlur()}
+              />
+              <FieldError errors={[errors.tax_number]} />
+              {duplicateMatch && !duplicateDismissed ? (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950">
+                  <p className="font-medium">
+                    Bu vergi numarası sistemde kayıtlı görünüyor
+                  </p>
+                  <p className="mt-1 text-amber-900/90">
+                    📋 {duplicateMatch.name} — {duplicateMatch.phone} —{" "}
+                    {duplicateMatch.city}
+                  </p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="min-h-10"
+                      disabled={isSubmitting}
+                      onClick={() => void handleUseDuplicateCustomer()}
+                    >
+                      Bu firmayı seç →
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="min-h-10"
+                      disabled={isSubmitting}
+                      onClick={() => setDuplicateDismissed(true)}
+                    >
+                      Yine de devam
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </Field>
+          ) : null}
+
+          {customerModeChosen && !isRegisteredCustomer ? (
+            <FieldGroup className="gap-5">
+              <Field>
+                <FieldLabel htmlFor="company_name">Firma / Kurum *</FieldLabel>
+                <Input
+                  id="company_name"
+                  className="h-11"
+                  disabled={isSubmitting}
+                  {...register("company_name")}
+                />
+                <FieldError errors={[errors.company_name]} />
+              </Field>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="contact_name">Ad Soyad *</FieldLabel>
+                  <Input
+                    id="contact_name"
+                    className="h-11"
+                    disabled={isSubmitting}
+                    {...register("contact_name")}
+                  />
+                  <FieldError errors={[errors.contact_name]} />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="phone">Telefon *</FieldLabel>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    className="h-11"
+                    disabled={isSubmitting}
+                    {...register("phone")}
+                  />
+                  <FieldError errors={[errors.phone]} />
+                </Field>
+              </div>
+              <Field>
+                <FieldLabel htmlFor="address">Adres *</FieldLabel>
+                <textarea
+                  id="address"
+                  className={textareaClassName}
+                  rows={3}
+                  disabled={isSubmitting}
+                  {...register("address")}
+                />
+                <FieldError errors={[errors.address]} />
+              </Field>
+            </FieldGroup>
+          ) : null}
+
+          {customerModeChosen && isRegisteredCustomer && hasSelectedCustomer ? (
+            <FieldGroup className="gap-5">
+              <Field>
+                <FieldLabel htmlFor="company_name">Firma / Kurum *</FieldLabel>
+                <Input
+                  id="company_name"
+                  className="h-11 bg-muted/40"
+                  readOnly
+                  disabled={isSubmitting}
+                  {...register("company_name")}
+                />
+                <FieldError errors={[errors.company_name]} />
+              </Field>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="contact_name">Yetkili Ad Soyad *</FieldLabel>
+                  <Input
+                    id="contact_name"
+                    className="h-11 bg-muted/40"
+                    readOnly
+                    disabled={isSubmitting}
+                    {...register("contact_name")}
+                  />
+                  <FieldError errors={[errors.contact_name]} />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="phone">Telefon *</FieldLabel>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    className="h-11 bg-muted/40"
+                    readOnly
+                    disabled={isSubmitting}
+                    {...register("phone")}
+                  />
+                  <FieldError errors={[errors.phone]} />
+                </Field>
+              </div>
+              <Field>
+                <FieldLabel htmlFor="address">Adres *</FieldLabel>
+                <textarea
+                  id="address"
+                  className={cn(textareaClassName, "bg-muted/40")}
+                  rows={3}
+                  readOnly
+                  disabled={isSubmitting}
+                  {...register("address")}
+                />
+                <FieldError errors={[errors.address]} />
+              </Field>
+            </FieldGroup>
+          ) : null}
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="overflow-visible">
         <CardHeader>
           <CardTitle>Cihaz bilgileri</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-visible">
           <FieldGroup className="gap-5">
             <Field>
               <FieldLabel htmlFor="device_type">Cihaz türü *</FieldLabel>
               <Input
                 id="device_type"
-                className="h-10"
+                className="h-11"
                 placeholder="Örn. Kompresör, Kurutucu"
                 disabled={isSubmitting}
                 {...register("device_type")}
@@ -290,75 +756,92 @@ export function ServiceRequestStep1Form({
                   control={control}
                   name="device_model_id"
                   render={({ field }) => (
-                    <div ref={modelPickerRef} className="relative">
-                      <div className="relative">
+                    <Popover
+                      open={modelOpen}
+                      onOpenChange={(open, details) => {
+                        if (!open && details.reason === "trigger-press") {
+                          return;
+                        }
+                        setModelOpen(open);
+                      }}
+                      modal={false}
+                    >
+                      <PopoverTrigger
+                        nativeButton={false}
+                        render={<div className="relative w-full" />}
+                      >
                         <Input
-                          className="h-10 pr-9"
+                          className="h-11 pr-9"
                           placeholder="Marka veya model ara…"
                           value={modelQuery}
                           disabled={isSubmitting}
-                          onChange={(e) => {
-                            setModelQuery(e.target.value);
+                          onChange={(event) => {
+                            setModelQuery(event.target.value);
                             setModelOpen(true);
-                            if (!e.target.value.trim()) {
+                            if (!event.target.value.trim()) {
                               field.onChange(null);
                               setValue("brand_model", "");
                             }
                           }}
                           onFocus={() => setModelOpen(true)}
-                          onBlur={() => {
-                            setTimeout(() => setModelOpen(false), 150);
-                          }}
                           autoComplete="off"
                         />
                         <ChevronsUpDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                      </div>
-                      {modelOpen && filteredModels.length > 0 ? (
-                        <ul
-                          className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-border bg-card py-1 shadow-md"
-                          role="listbox"
-                        >
-                          {filteredModels.map((model) => (
-                            <li key={model.id}>
-                              <button
-                                type="button"
-                                role="option"
-                                className={cn(
-                                  "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted",
-                                  field.value === model.id && "bg-muted/60",
+                      </PopoverTrigger>
+                      <PopoverContent
+                        align="start"
+                        side="bottom"
+                        sideOffset={4}
+                        className="z-50 max-h-56 w-(--anchor-width) overflow-auto p-0"
+                      >
+                        {filteredModels.length > 0 ? (
+                          <ul role="listbox">
+                            {customerModels.length > 0 ? (
+                              <>
+                                <li className="px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+                                  Bu müşterinin cihazları
+                                </li>
+                                {customerModels.map((model) =>
+                                  renderModelOption(model, field.value, (selected) => {
+                                    field.onChange(selected.id);
+                                    setValue("brand_model", selected.label);
+                                    setModelQuery(selected.label);
+                                    setModelOpen(false);
+                                  }),
                                 )}
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() => {
-                                  field.onChange(model.id);
-                                  setValue("brand_model", model.label);
-                                  setModelQuery(model.label);
-                                  setModelOpen(false);
-                                }}
-                              >
-                                {field.value === model.id ? (
-                                  <Check className="size-4 shrink-0 text-primary" />
-                                ) : (
-                                  <span className="size-4 shrink-0" />
-                                )}
-                                {model.label}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                      {modelOpen &&
-                      modelQuery.trim() &&
-                      filteredModels.length === 0 ? (
-                        <p className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-md">
-                          Eşleşen model bulunamadı — manuel girişi deneyin
-                        </p>
-                      ) : null}
-                    </div>
+                                {otherModels.length > 0 ? (
+                                  <li className="px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+                                    Diğer
+                                  </li>
+                                ) : null}
+                              </>
+                            ) : null}
+                            {(customerModels.length === 0
+                              ? filteredModels
+                              : otherModels
+                            ).map((model) =>
+                              renderModelOption(model, field.value, (selected) => {
+                                field.onChange(selected.id);
+                                setValue("brand_model", selected.label);
+                                setModelQuery(selected.label);
+                                setModelOpen(false);
+                              }),
+                            )}
+                          </ul>
+                        ) : (
+                          <p className="px-3 py-2 text-sm text-muted-foreground">
+                            {modelQuery.trim()
+                              ? "Eşleşen model bulunamadı — manuel girişi deneyin"
+                              : "Model bulunamadı"}
+                          </p>
+                        )}
+                      </PopoverContent>
+                    </Popover>
                   )}
                 />
               ) : (
                 <Input
-                  className="h-10"
+                  className="h-11"
                   placeholder="Marka ve model adını yazın"
                   disabled={isSubmitting}
                   {...register("brand_model")}
@@ -373,7 +856,7 @@ export function ServiceRequestStep1Form({
               <FieldLabel htmlFor="serial_number">Seri no *</FieldLabel>
               <Input
                 id="serial_number"
-                className="h-10 font-mono"
+                className="h-11 font-mono"
                 disabled={isSubmitting}
                 {...register("serial_number")}
               />
@@ -437,7 +920,7 @@ export function ServiceRequestStep1Form({
               <FieldLabel htmlFor="technician">Sorumlu teknisyen</FieldLabel>
               <Input
                 id="technician"
-                className="h-10 bg-muted/40"
+                className="h-11 bg-muted/40"
                 value={technicianName}
                 readOnly
               />

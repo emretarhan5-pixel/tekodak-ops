@@ -164,10 +164,28 @@ export type ServiceRequestFormBranchOption = {
   code: string;
 };
 
+export type ServiceRequestFormCustomerOption = {
+  id: string;
+  name: string;
+  branch_id: string;
+};
+
 export type ServiceRequestFormOptions = {
   branches: ServiceRequestFormBranchOption[];
+  customers: ServiceRequestFormCustomerOption[];
   device_models: ServiceRequestFormDeviceModelOption[];
 };
+
+export type CheckTaxNumberCustomer = {
+  id: string;
+  name: string;
+  phone: string;
+  city: string;
+};
+
+export type CheckTaxNumberResult =
+  | { found: false; error?: string }
+  | { found: true; customer: CheckTaxNumberCustomer };
 
 export type AddServiceRequestPartAction = (
   input: AddServiceRequestPartInput,

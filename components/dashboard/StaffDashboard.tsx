@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -47,8 +47,6 @@ const URGENCY_BORDER_CLASSES: Record<StaffDashboardPlannedDateUrgency, string> =
   warning: "border-l-amber-400",
   normal: "border-l-slate-200",
 };
-
-const LIST_MAX_HEIGHT = "max-h-[10.5rem]";
 
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
@@ -257,12 +255,16 @@ function CompactRow({
   return (
     <div
       className={cn(
-        "flex h-12 items-center gap-2 border-b border-slate-100 border-l-2 px-3 transition-colors last:border-0 hover:bg-slate-50/80",
+        "overflow-hidden border-b border-slate-100 border-l-2 px-2 py-2 transition-colors last:border-0 hover:bg-slate-50/80 md:flex md:h-12 md:items-center md:gap-2 md:px-3 md:py-0",
         URGENCY_BORDER_CLASSES[urgency],
       )}
     >
-      <div className="min-w-0 flex-1 truncate text-xs">{children}</div>
-      <div className="flex shrink-0 items-center gap-1.5">{actions}</div>
+      <div className="min-w-0 flex-1 space-y-1 text-xs md:truncate md:space-y-0">
+        {children}
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:mt-0 md:shrink-0 md:flex-nowrap">
+        {actions}
+      </div>
     </div>
   );
 }
@@ -289,7 +291,7 @@ function StaffDashboardHeader({ data }: { data: StaffDashboardData }) {
   const motivation = useMemo(() => getMotivationMessage(data), [data]);
 
   return (
-    <header className="group staff-dash-fade-down relative -mx-4 border-b border-slate-200/80 bg-gradient-to-b from-slate-50 to-white px-4 py-4 md:-mx-6 md:px-6">
+    <header className="group staff-dash-fade-down relative -mx-3 border-b border-slate-200/80 bg-gradient-to-b from-slate-50 to-white px-3 py-4 md:-mx-6 md:px-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div
           className="min-w-0 space-y-0.5"
@@ -317,10 +319,10 @@ function StaffDashboardHeader({ data }: { data: StaffDashboardData }) {
           </div>
           <Link
             href="/service-requests/new"
-            data-onboarding-target="new-service-request"
+            data-onboarding="new-request-btn"
             className={cn(
               buttonVariants({ size: "sm" }),
-              "h-8 gap-1.5 px-3 text-xs",
+              "hidden h-8 gap-1.5 px-3 text-xs md:inline-flex",
             )}
           >
             <Plus className="size-3.5" />
@@ -363,7 +365,7 @@ function SummaryStatCard({
   return (
     <div
       className={cn(
-        "staff-dash-stagger-card flex items-center gap-3 rounded-lg border bg-white px-3 py-3 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-md",
+        "staff-dash-stagger-card flex items-center gap-2 overflow-hidden rounded-lg border bg-white px-2 py-2.5 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-md md:gap-3 md:px-3 md:py-3",
         success && "border-emerald-200",
         hasUrgent && "staff-dash-urgent-pulse border-red-300",
         !success && !hasUrgent && "border-slate-200/80",
@@ -382,7 +384,7 @@ function SummaryStatCard({
         <p className="text-2xl font-bold leading-none tabular-nums text-slate-900">
           {displayValue}
         </p>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">{label}</p>
+        <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{label}</p>
       </div>
       {hasUrgent ? (
         <span className="shrink-0 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
@@ -410,16 +412,21 @@ function ServiceRequestRow({ item }: { item: StaffDashboardServiceRequestItem })
         </>
       }
     >
-      <Link
-        href={`/service-requests/${item.id}`}
-        className="font-mono font-semibold text-blue-600 hover:underline"
-      >
-        {item.request_number}
-      </Link>
-      <span className="text-slate-400"> · </span>
-      <span className="font-medium text-slate-800">{item.company_name}</span>
-      <span className="text-slate-400"> · </span>
-      <span className="text-muted-foreground">{item.step_label}</span>
+      <div className="min-w-0">
+        <Link
+          href={`/service-requests/${item.id}`}
+          className="font-mono font-semibold text-blue-600 hover:underline"
+        >
+          {item.request_number}
+        </Link>
+        <span className="text-slate-400"> · </span>
+        <span className="font-medium text-slate-800">{item.company_name}</span>
+      </div>
+      <p className="text-muted-foreground md:hidden">{item.step_label}</p>
+      <span className="hidden md:contents">
+        <span className="text-slate-400"> · </span>
+        <span className="text-muted-foreground">{item.step_label}</span>
+      </span>
     </CompactRow>
   );
 }
@@ -480,14 +487,96 @@ function MaintenanceRow({ item }: { item: StaffDashboardMaintenancePlanItem }) {
         </>
       }
     >
-      <span className="font-mono font-semibold text-slate-900">
-        {item.contract_number}
+      <div className="min-w-0">
+        <span className="font-mono font-semibold text-slate-900">
+          {item.contract_number}
+        </span>
+        <span className="text-slate-400"> · </span>
+        <span className="font-medium text-slate-800">{item.customer_name}</span>
+      </div>
+      <p className="text-muted-foreground md:hidden">{item.device_count} cihaz</p>
+      <span className="hidden md:contents">
+        <span className="text-slate-400"> · </span>
+        <span className="text-muted-foreground">{item.device_count} cihaz</span>
       </span>
-      <span className="text-slate-400"> · </span>
-      <span className="font-medium text-slate-800">{item.customer_name}</span>
-      <span className="text-slate-400"> · </span>
-      <span className="text-muted-foreground">{item.device_count} cihaz</span>
     </CompactRow>
+  );
+}
+
+function MobileScrollableList({ children }: { children: React.ReactNode }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [canScroll, setCanScroll] = useState(false);
+  const [atBottom, setAtBottom] = useState(false);
+
+  const updateCanScroll = useCallback(() => {
+    const element = scrollRef.current;
+    if (!element) return;
+    setCanScroll(element.scrollHeight > element.clientHeight + 2);
+  }, []);
+
+  useEffect(() => {
+    const element = scrollRef.current;
+    if (!element) return;
+
+    updateCanScroll();
+
+    const resizeObserver = new ResizeObserver(updateCanScroll);
+    resizeObserver.observe(element);
+    window.addEventListener("resize", updateCanScroll);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateCanScroll);
+    };
+  }, [children, updateCanScroll]);
+
+  useEffect(() => {
+    const scrollElement = scrollRef.current;
+    const sentinel = sentinelRef.current;
+    if (!scrollElement || !sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry) return;
+        setAtBottom(entry.isIntersecting);
+      },
+      { root: scrollElement, threshold: 0 },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [children]);
+
+  const showScrollHint = canScroll && !atBottom;
+
+  return (
+    <div className="relative">
+      <div
+        ref={scrollRef}
+        className="max-h-64 overflow-x-hidden overflow-y-auto md:max-h-[10.5rem]"
+      >
+        {children}
+        <div ref={sentinelRef} className="h-px shrink-0 md:hidden" aria-hidden />
+      </div>
+
+      {showScrollHint ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-10 md:hidden"
+          aria-hidden
+        >
+          <div
+            className="h-12"
+            style={{
+              background: "linear-gradient(to bottom, transparent, white)",
+            }}
+          />
+          <p className="absolute inset-x-0 bottom-1 text-center text-xs text-muted-foreground">
+            ↓ daha fazla
+          </p>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -511,7 +600,7 @@ function ListSection({
       className="staff-dash-fade-up overflow-hidden border-slate-200/80 bg-white shadow-sm"
       data-onboarding-target={onboardingTarget}
     >
-      <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 border-b border-slate-100 bg-slate-50/50 px-4 py-2.5">
+      <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 overflow-hidden border-b border-slate-100 bg-slate-50/50 px-3 py-2.5 md:px-4">
         <CardTitle className="text-sm font-semibold">{title}</CardTitle>
         <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
           {count} açık
@@ -528,7 +617,7 @@ function ListSection({
             {emptyMessage}
           </p>
         ) : (
-          <div className={cn(LIST_MAX_HEIGHT, "overflow-y-auto")}>{children}</div>
+          <MobileScrollableList>{children}</MobileScrollableList>
         )}
       </CardContent>
     </Card>
@@ -542,10 +631,10 @@ function PerformanceSection({ data }: { data: StaffDashboardData }) {
 
   return (
     <Card className="staff-dash-fade-up overflow-hidden border-slate-200/80 bg-white shadow-sm">
-      <CardHeader className="space-y-0 border-b border-slate-100 bg-slate-50/50 px-4 py-2.5">
+      <CardHeader className="space-y-0 overflow-hidden border-b border-slate-100 bg-slate-50/50 px-3 py-2.5 md:px-4">
         <CardTitle className="text-sm font-semibold">🎯 Hedef & Performans</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 p-3">
+      <CardContent className="space-y-3 overflow-x-hidden p-2 md:p-3">
         <dl className="grid grid-cols-3 gap-2">
           <div className="rounded-md border border-slate-200 bg-slate-50/50 px-2 py-2 text-center">
             <dt className="text-[10px] text-muted-foreground">Tamamlanan</dt>
@@ -614,6 +703,19 @@ function PerformanceSection({ data }: { data: StaffDashboardData }) {
   );
 }
 
+function NewServiceRequestFab() {
+  return (
+    <Link
+      href="/service-requests/new"
+      data-onboarding="new-request-btn"
+      className="fixed bottom-20 right-4 z-50 inline-flex items-center gap-2 rounded-full bg-black px-5 py-3 text-sm font-medium text-white shadow-lg transition-transform hover:scale-105 active:scale-100 md:hidden"
+    >
+      <Plus className="size-4" />
+      Yeni Talep
+    </Link>
+  );
+}
+
 function StaffDashboardContent({ data }: StaffDashboardProps) {
   return (
     <>
@@ -645,10 +747,10 @@ function StaffDashboardContent({ data }: StaffDashboardProps) {
         }
       `}</style>
 
-      <div className="space-y-3 pb-4">
+      <div className="space-y-3 overflow-x-hidden pb-4">
         <StaffDashboardHeader data={data} />
 
-        <section className="grid grid-cols-3 gap-3">
+        <section className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3">
           <SummaryStatCard
             index={0}
             icon={Wrench}
@@ -707,6 +809,8 @@ function StaffDashboardContent({ data }: StaffDashboardProps) {
           </div>
         </div>
       </div>
+
+      <NewServiceRequestFab />
     </>
   );
 }

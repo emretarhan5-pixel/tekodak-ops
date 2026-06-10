@@ -1,6 +1,7 @@
 "use server";
 
 import {
+  assertCanAccessBranch,
   assertCanEdit,
   getServiceRequestApiContext,
   toActionError,
@@ -32,9 +33,33 @@ export async function createServiceRequest(
     await validateDeviceModelId(ctx, input.device_model_id);
     await validateDeviceAvailableForServiceRequest(ctx, input.serial_number);
 
+    if (input.customer_id) {
+      const { data: customer, error: customerError } = await ctx.supabase
+        .from("customers")
+        .select("id, branch_id")
+        .eq("id", input.customer_id)
+        .is("deleted_at", null)
+        .maybeSingle();
+
+      if (customerError) {
+        throw new Error(customerError.message);
+      }
+
+      if (!customer) {
+        throw new Error("Seçilen müşteri bulunamadı");
+      }
+
+      assertCanAccessBranch(ctx, customer.branch_id);
+
+      if (customer.branch_id !== branchId) {
+        throw new Error("Seçilen müşteri bu şubeye ait değil");
+      }
+    }
+
     const row: TablesInsert<"service_requests"> = {
       request_number: "",
       branch_id: branchId,
+      customer_id: input.customer_id,
       status: "ariza_tespit",
       current_step: 2,
       company_name: input.company_name.trim(),

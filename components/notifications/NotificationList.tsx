@@ -11,6 +11,13 @@ import { NotificationListItem } from "@/components/notifications/NotificationLis
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   NOTIFICATION_READ_STATUS_LABELS,
   NOTIFICATION_READ_STATUSES,
   NOTIFICATION_TYPE_LABELS,
@@ -152,29 +159,28 @@ export function NotificationList({
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant={search.type === "all" ? "default" : "outline"}
-            disabled={isPending}
-            onClick={() => updateSearch({ type: "all" })}
-          >
-            Tüm tipler
-          </Button>
-          {NOTIFICATION_TYPES.map((type) => (
-            <Button
-              key={type}
-              type="button"
-              size="sm"
-              variant={search.type === type ? "default" : "outline"}
-              disabled={isPending}
-              onClick={() => updateSearch({ type })}
-            >
-              {NOTIFICATION_TYPE_LABELS[type]}
-            </Button>
-          ))}
-        </div>
+        <Select
+          value={search.type}
+          disabled={isPending}
+          onValueChange={(value) => {
+            if (!value) return;
+            updateSearch({
+              type: value as NotificationSearchInput["type"],
+            });
+          }}
+        >
+          <SelectTrigger className="w-40" size="sm">
+            <SelectValue placeholder="Tüm tipler" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tüm tipler</SelectItem>
+            {NOTIFICATION_TYPES.map((type) => (
+              <SelectItem key={type} value={type}>
+                {NOTIFICATION_TYPE_LABELS[type]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {data.items.length === 0 ? (

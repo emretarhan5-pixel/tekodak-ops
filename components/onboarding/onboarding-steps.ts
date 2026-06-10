@@ -20,7 +20,7 @@ export const DASHBOARD_ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     id: "new-service-request",
-    target: "new-service-request",
+    target: "new-request-btn",
     title: "🔧 Yeni Servis Talebi Aç",
     description:
       "Bir müşteri seni aradığında veya arıza bildirdiğinde buraya tıkla. Müşteri ve cihaz bilgilerini girerek yeni bir servis talebi oluşturursun.",

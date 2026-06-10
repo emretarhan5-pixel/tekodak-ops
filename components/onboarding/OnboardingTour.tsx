@@ -82,10 +82,38 @@ function isMobileViewport(): boolean {
   return typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT;
 }
 
+function isOnboardingTargetVisible(element: HTMLElement): boolean {
+  if (!element.isConnected) return false;
+
+  const style = window.getComputedStyle(element);
+  if (
+    style.display === "none" ||
+    style.visibility === "hidden" ||
+    Number(style.opacity) === 0
+  ) {
+    return false;
+  }
+
+  const rect = element.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
+}
+
 function getTargetElement(targetId: string): HTMLElement | null {
-  return document.querySelector<HTMLElement>(
+  const selectors = [
+    `[data-onboarding="${targetId}"]`,
     `[data-onboarding-target="${targetId}"]`,
-  );
+  ];
+
+  for (const selector of selectors) {
+    const elements = document.querySelectorAll<HTMLElement>(selector);
+    for (const element of elements) {
+      if (isOnboardingTargetVisible(element)) {
+        return element;
+      }
+    }
+  }
+
+  return null;
 }
 
 function scrollTargetIntoView(

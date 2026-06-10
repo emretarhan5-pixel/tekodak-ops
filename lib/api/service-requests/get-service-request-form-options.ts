@@ -2,6 +2,7 @@
 
 import {
   getServiceRequestApiContext,
+  resolveBranchFilter,
   toActionError,
   ServiceRequestApiError,
 } from "@/lib/api/service-requests/auth";
@@ -16,6 +17,18 @@ type RawDeviceModelRow = {
 export async function getServiceRequestFormOptions(): Promise<ServiceRequestFormOptions> {
   try {
     const ctx = await getServiceRequestApiContext();
+    const branchFilter = resolveBranchFilter(ctx);
+
+    let customersQuery = ctx.supabase
+      .from("customers")
+      .select("id, name, branch_id")
+      .is("deleted_at", null)
+      .order("name", { ascending: true })
+      .limit(2000);
+
+    if (branchFilter) {
+      customersQuery = customersQuery.eq("branch_id", branchFilter);
+    }
 
     const branchesPromise = ctx.permissions.isAdmin
       ? ctx.supabase
@@ -41,9 +54,10 @@ export async function getServiceRequestFormOptions(): Promise<ServiceRequestForm
       .order("model_name", { ascending: true })
       .limit(2000);
 
-    const [branchesRes, modelsRes] = await Promise.all([
+    const [branchesRes, modelsRes, customersRes] = await Promise.all([
       branchesPromise,
       modelsPromise,
+      customersQuery,
     ]);
 
     if (branchesRes.error) {
@@ -51,6 +65,9 @@ export async function getServiceRequestFormOptions(): Promise<ServiceRequestForm
     }
     if (modelsRes.error) {
       throw new Error(modelsRes.error.message);
+    }
+    if (customersRes.error) {
+      throw new Error(customersRes.error.message);
     }
 
     let branches: ServiceRequestFormOptions["branches"] = [];
@@ -81,7 +98,12 @@ export async function getServiceRequestFormOptions(): Promise<ServiceRequestForm
       },
     );
 
-    return { branches, device_models };
+    return {
+      branches,
+      customers: (customersRes.data ??
+        []) as ServiceRequestFormOptions["customers"],
+      device_models,
+    };
   } catch (error) {
     if (error instanceof ServiceRequestApiError) {
       throw error;

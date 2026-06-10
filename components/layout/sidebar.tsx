@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 import { getNavItemsForRole } from "@/lib/constants/navigation";
 import { ROLE_LABELS } from "@/lib/constants/roles";
@@ -8,6 +8,7 @@ import { getPermissions } from "@/lib/utils/permissions";
 import { useDashboardUser } from "@/components/providers/dashboard-user-provider";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { Button } from "@/components/ui/button";
+import { SheetClose } from "@/components/ui/sheet";
 import { useUiStore } from "@/stores/ui-store";
 import { cn } from "@/lib/utils";
 
@@ -35,12 +36,35 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-full flex-col border-r border-border bg-card",
-        sidebarCollapsed ? "w-[72px]" : "w-64",
+        "flex h-full flex-col bg-card",
+        isMobileDrawer ? "w-full" : "border-r border-border",
+        !isMobileDrawer && (sidebarCollapsed ? "w-[72px]" : "w-64"),
         className,
       )}
     >
-      {!isMobileDrawer ? (
+      {isMobileDrawer ? (
+        <div className="flex h-12 shrink-0 items-center justify-between border-b border-border px-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-medium tracking-widest text-muted-foreground uppercase">
+              TEKODAK
+            </p>
+            <p className="text-sm font-semibold leading-tight">OPS</p>
+          </div>
+          <SheetClose
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="shrink-0"
+                aria-label="Menüyü kapat"
+              />
+            }
+          >
+            <X className="size-4" />
+          </SheetClose>
+        </div>
+      ) : (
         <div
           className={cn(
             "flex h-14 shrink-0 items-center border-b border-border px-4",
@@ -58,31 +82,27 @@ export function Sidebar({
             </div>
           )}
         </div>
-      ) : null}
+      )}
 
-      <div
-        className={cn(
-          "flex flex-1 flex-col py-4",
-          isMobileDrawer && "pt-11",
-        )}
-      >
+      <div className={cn("flex flex-1 flex-col overflow-y-auto", isMobileDrawer ? "py-3" : "py-4")}>
         <SidebarNav
           items={navItems}
-          collapsed={sidebarCollapsed}
+          collapsed={isMobileDrawer ? false : sidebarCollapsed}
+          variant={isMobileDrawer ? "drawer" : "default"}
           onNavigate={onNavigate}
         />
       </div>
 
       <div className="mt-auto border-t border-border p-3">
-        {!sidebarCollapsed || isMobileDrawer ? (
+        {(!sidebarCollapsed || isMobileDrawer) && (
           <div className={cn("px-2 text-xs text-muted-foreground", !isMobileDrawer && "mb-3")}>
             <p className="font-medium text-foreground">{user.full_name}</p>
             <p>
               {ROLE_LABELS[user.role]} · {branchLabel}
             </p>
           </div>
-        ) : null}
-        {!isMobileDrawer ? (
+        )}
+        {!isMobileDrawer && (
           <Button
             type="button"
             variant="outline"
@@ -102,7 +122,7 @@ export function Sidebar({
               </>
             )}
           </Button>
-        ) : null}
+        )}
       </div>
     </aside>
   );

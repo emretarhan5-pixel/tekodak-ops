@@ -12,6 +12,7 @@ import {
   DEVICE_SCRAP_NEXT_STEPS,
   DEVICE_SCRAP_REASONS,
 } from "@/lib/constants/device-scrap";
+import { isValidTaxNumber, normalizeTaxNumber } from "@/lib/utils/tax-number";
 
 const optionalUuid = z
   .string()
@@ -68,16 +69,39 @@ const step1Fields = {
 
 export const createServiceRequestSchema = z.object({
   branch_id: z.string().uuid("Geçerli bir şube seçin").optional(),
+  customer_id: optionalUuid.transform(emptyToNullUuid),
   ...step1Fields,
 });
 
 export const serviceRequestStep1FormSchema = z
   .object({
     branch_id: z.string().uuid("Geçerli bir şube seçin").optional().or(z.literal("")),
+    customer_mode: z.enum(["registered", "new"]),
+    customer_id: optionalUuid.transform(emptyToNullUuid),
+    tax_number: z.string().trim().optional(),
     brand_model_mode: z.enum(["catalog", "manual"]),
     ...step1Fields,
   })
   .superRefine((data, ctx) => {
+    if (data.customer_mode === "registered") {
+      if (!data.customer_id) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Kayıtlı müşteri seçin",
+          path: ["customer_id"],
+        });
+      }
+    } else {
+      const taxNumber = normalizeTaxNumber(data.tax_number ?? "");
+      if (!isValidTaxNumber(taxNumber)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Vergi numarası 10 veya 11 haneli olmalıdır",
+          path: ["tax_number"],
+        });
+      }
+    }
+
     if (data.brand_model_mode === "catalog" && !data.device_model_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

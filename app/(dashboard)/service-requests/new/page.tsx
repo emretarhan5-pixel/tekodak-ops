@@ -51,6 +51,7 @@ export default async function NewServiceRequestPage() {
 
         <ServiceRequestStep1Form
           branches={options.branches}
+          customers={options.customers}
           deviceModels={options.device_models}
           technicianName={user.full_name}
           isAdmin={permissions.isAdmin}
