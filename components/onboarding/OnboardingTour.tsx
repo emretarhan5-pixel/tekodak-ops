@@ -40,6 +40,8 @@ const TOOLTIP_WIDTH = 320;
 const TOOLTIP_HEIGHT = 180;
 const VIEWPORT_MARGIN = 16;
 const MOBILE_BREAKPOINT = 768;
+const MOBILE_TOOLTIP_BOTTOM = 80;
+const SCROLL_SETTLE_MS = 300;
 const STEP_TRANSITION_MS = 150;
 
 type StepDirection = "forward" | "backward";
@@ -59,10 +61,59 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.innerWidth < MOBILE_BREAKPOINT,
+  );
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  return isMobile;
+}
+
+function isMobileViewport(): boolean {
+  return typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT;
+}
+
 function getTargetElement(targetId: string): HTMLElement | null {
   return document.querySelector<HTMLElement>(
     `[data-onboarding-target="${targetId}"]`,
   );
+}
+
+function scrollTargetIntoView(
+  element: HTMLElement,
+  behavior: ScrollBehavior,
+): void {
+  element.scrollIntoView({ behavior, block: "center", inline: "nearest" });
+
+  const main = document.querySelector("main");
+  if (!main) return;
+
+  const mainStyle = window.getComputedStyle(main);
+  if (mainStyle.overflowY !== "auto" && mainStyle.overflowY !== "scroll") {
+    return;
+  }
+
+  const mainRect = main.getBoundingClientRect();
+  const elementRect = element.getBoundingClientRect();
+  const targetTop =
+    main.scrollTop +
+    (elementRect.top - mainRect.top) -
+    mainRect.height / 2 +
+    elementRect.height / 2;
+
+  main.scrollTo({
+    top: Math.max(0, targetTop),
+    behavior,
+  });
 }
 
 function measureHighlightRect(targetId: string): TargetRect | null {
@@ -205,21 +256,20 @@ function computeDesktopPlacement(
 function computeTooltipPlacement(
   step: OnboardingStep,
 ): TooltipPlacement | null {
+  const mobile = isMobileViewport();
+
   if (step.variant === "center") {
-    if (window.innerWidth < MOBILE_BREAKPOINT) {
-      return { mode: "mobile" };
-    }
-    return { mode: "center" };
+    return { mode: mobile ? "mobile" : "center" };
   }
 
   if (!step.target) return null;
 
-  const rect = getElementRect(step.target);
-  if (!rect) return null;
-
-  if (window.innerWidth < MOBILE_BREAKPOINT) {
+  if (mobile) {
     return { mode: "mobile" };
   }
+
+  const rect = getElementRect(step.target);
+  if (!rect) return null;
 
   return computeDesktopPlacement(rect, step.position);
 }
@@ -296,6 +346,7 @@ type TourTooltipProps = {
   enterReady: boolean;
   isInitialOpen: boolean;
   isNavigating: boolean;
+  isMobile: boolean;
   onNext: () => void;
   onPrev: () => void;
   onSkip: () => void;
@@ -307,18 +358,29 @@ function getTooltipTransitionClass(
   direction: StepDirection,
   enterReady: boolean,
   isInitialOpen: boolean,
+  isMobile: boolean,
 ): string {
   if (isInitialOpen) {
-    return "onboarding-tooltip-initial-enter";
+    return isMobile
+      ? "onboarding-tooltip-mobile-initial-enter"
+      : "onboarding-tooltip-initial-enter";
   }
 
   if (phase === "out") {
+    if (isMobile) {
+      return "onboarding-tooltip-mobile-exit";
+    }
     return direction === "forward"
       ? "onboarding-tooltip-exit-forward"
       : "onboarding-tooltip-exit-backward";
   }
 
   if (phase === "in") {
+    if (isMobile) {
+      return enterReady
+        ? "onboarding-tooltip-mobile-enter-to"
+        : "onboarding-tooltip-mobile-enter-from";
+    }
     if (!enterReady) {
       return direction === "forward"
         ? "onboarding-tooltip-enter-from-forward"
@@ -327,7 +389,9 @@ function getTooltipTransitionClass(
     return "onboarding-tooltip-enter-to";
   }
 
-  return "onboarding-tooltip-enter-to";
+  return isMobile
+    ? "onboarding-tooltip-mobile-enter-to"
+    : "onboarding-tooltip-enter-to";
 }
 
 function TourTooltip({
@@ -343,6 +407,7 @@ function TourTooltip({
   enterReady,
   isInitialOpen,
   isNavigating,
+  isMobile,
   onNext,
   onPrev,
   onSkip,
@@ -353,8 +418,10 @@ function TourTooltip({
     direction,
     enterReady,
     isInitialOpen,
+    isMobile,
   );
-  const content = (
+
+  const desktopContent = (
     <>
       <p className="text-xs font-medium text-muted-foreground">
         {stepIndex + 1}/{totalSteps}
@@ -411,19 +478,83 @@ function TourTooltip({
     </>
   );
 
+  const mobileContent = (
+    <>
+      <p className="text-center text-xs font-medium text-muted-foreground">
+        {stepIndex + 1}/{totalSteps}
+      </p>
+      <h3
+        id="onboarding-step-title"
+        className="mt-2 text-base font-semibold leading-snug"
+      >
+        {title}
+      </h3>
+      <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+        {description}
+      </p>
+
+      <div className="mt-4 flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          className="min-h-11 flex-1 text-sm"
+          disabled={stepIndex === 0 || isNavigating}
+          onClick={onPrev}
+        >
+          Geri
+        </Button>
+        {isLastStep ? (
+          <Button
+            type="button"
+            className="min-h-11 flex-1 text-sm"
+            disabled={isNavigating}
+            onClick={onComplete}
+          >
+            {completeButtonLabel}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            className="min-h-11 flex-1 text-sm"
+            disabled={isNavigating}
+            onClick={onNext}
+          >
+            İleri
+          </Button>
+        )}
+      </div>
+
+      <Button
+        type="button"
+        variant="ghost"
+        className="mt-1 min-h-10 w-full text-sm text-muted-foreground"
+        onClick={onSkip}
+      >
+        Atla
+      </Button>
+    </>
+  );
+
   const panel = (
     <div
       className={`onboarding-tooltip-panel w-full rounded-xl border border-border bg-background p-4 shadow-xl ${panelClassName}`}
       role="dialog"
       aria-labelledby="onboarding-step-title"
     >
-      {content}
+      {placement.mode === "mobile" ? mobileContent : desktopContent}
     </div>
   );
 
   if (placement.mode === "mobile") {
     return (
-      <div className="onboarding-tooltip-mobile fixed inset-x-0 bottom-0 z-[101] p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div
+        className="onboarding-tooltip-mobile fixed z-[101]"
+        style={{
+          bottom: MOBILE_TOOLTIP_BOTTOM,
+          left: VIEWPORT_MARGIN,
+          right: VIEWPORT_MARGIN,
+        }}
+      >
         {panel}
       </div>
     );
@@ -463,10 +594,12 @@ export function OnboardingTour({
   onComplete,
 }: OnboardingTourProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
+  const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const [tooltipPlacement, setTooltipPlacement] =
     useState<TooltipPlacement | null>(null);
+  const [layoutReady, setLayoutReady] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
   const [transitionPhase, setTransitionPhase] =
     useState<StepTransitionPhase>("idle");
@@ -480,37 +613,55 @@ export function OnboardingTour({
   const isCenterStep = step?.variant === "center";
   const isNavigating = transitionPhase !== "idle";
 
+  const applyLayout = useCallback((currentStep: OnboardingStep) => {
+    if (currentStep.variant === "center") {
+      setTargetRect(null);
+      setTooltipPlacement(computeTooltipPlacement(currentStep));
+      setLayoutReady(true);
+      return;
+    }
+
+    if (!currentStep.target) {
+      setTargetRect(null);
+      setTooltipPlacement(null);
+      setLayoutReady(true);
+      return;
+    }
+
+    setTargetRect(measureHighlightRect(currentStep.target));
+    setTooltipPlacement(computeTooltipPlacement(currentStep));
+    setLayoutReady(true);
+  }, []);
+
   const updateLayout = useCallback(() => {
     if (!step) {
       setTargetRect(null);
       setTooltipPlacement(null);
+      setLayoutReady(false);
       return;
     }
 
+    setLayoutReady(false);
+
     if (step.variant === "center") {
-      setTargetRect(null);
-      setTooltipPlacement(computeTooltipPlacement(step));
+      applyLayout(step);
       return;
     }
 
     if (step.target) {
       const element = getTargetElement(step.target);
       if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        scrollTargetIntoView(
+          element,
+          prefersReducedMotion ? "auto" : "smooth",
+        );
       }
     }
 
     window.setTimeout(() => {
-      if (!step.target) {
-        setTargetRect(null);
-        setTooltipPlacement(null);
-        return;
-      }
-
-      setTargetRect(measureHighlightRect(step.target));
-      setTooltipPlacement(computeTooltipPlacement(step));
-    }, 180);
-  }, [step]);
+      applyLayout(step);
+    }, SCROLL_SETTLE_MS);
+  }, [applyLayout, prefersReducedMotion, step]);
 
   useEffect(() => {
     setMounted(true);
@@ -552,12 +703,22 @@ export function OnboardingTour({
     if (!active || !step) {
       setTargetRect(null);
       setTooltipPlacement(null);
+      setLayoutReady(false);
       return;
     }
 
     updateLayout();
 
-    const handleLayoutChange = () => updateLayout();
+    const handleLayoutChange = () => {
+      if (!step.target || step.variant === "center") {
+        applyLayout(step);
+        return;
+      }
+
+      setTargetRect(measureHighlightRect(step.target));
+      setTooltipPlacement(computeTooltipPlacement(step));
+    };
+
     window.addEventListener("resize", handleLayoutChange);
     window.addEventListener("scroll", handleLayoutChange, true);
 
@@ -565,7 +726,7 @@ export function OnboardingTour({
       window.removeEventListener("resize", handleLayoutChange);
       window.removeEventListener("scroll", handleLayoutChange, true);
     };
-  }, [active, step, stepIndex, updateLayout]);
+  }, [active, applyLayout, isMobile, step, stepIndex, updateLayout]);
 
   const navigateStep = useCallback(
     (nextDirection: StepDirection, action: () => void) => {
@@ -630,8 +791,9 @@ export function OnboardingTour({
     ) : null;
   }
 
-  const canRenderTooltip = Boolean(tooltipPlacement);
+  const canRenderTooltip = Boolean(tooltipPlacement) && layoutReady;
   const canRenderHighlight = Boolean(targetRect) && !isCenterStep;
+  const useMobileOverlay = isMobile && !isCenterStep;
 
   return (
     <>
@@ -644,23 +806,16 @@ export function OnboardingTour({
 
       {createPortal(
         <div className="onboarding-tour-root fixed inset-0 z-[100]">
-          {!isCenterStep ? (
-            <div
-              className="onboarding-overlay-enter absolute inset-0 bg-black/50"
-              aria-hidden
-            />
-          ) : (
-            <div
-              className="onboarding-overlay-enter absolute inset-0 bg-black/50"
-              aria-hidden
-            />
-          )}
+          <div
+            className="onboarding-overlay-enter absolute inset-0 bg-black/60"
+            aria-hidden
+          />
 
           {canRenderTooltip ? (
             <>
               {canRenderHighlight && targetRect ? (
                 <div
-                  className={`onboarding-highlight-panel pointer-events-none absolute rounded-lg ring-2 ring-primary ring-offset-2 ring-offset-background ${
+                  className={`onboarding-highlight-panel pointer-events-none absolute z-[1] rounded-lg ring-2 ring-primary ring-offset-2 ring-offset-background ${
                     highlightVisible
                       ? "onboarding-highlight-visible"
                       : "onboarding-highlight-hidden"
@@ -670,7 +825,11 @@ export function OnboardingTour({
                     left: targetRect.left,
                     width: targetRect.width,
                     height: targetRect.height,
-                    boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
+                    ...(useMobileOverlay
+                      ? { backgroundColor: "rgba(255, 255, 255, 0.04)" }
+                      : {
+                          boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
+                        }),
                   }}
                 />
               ) : null}
@@ -688,6 +847,7 @@ export function OnboardingTour({
                 enterReady={enterReady}
                 isInitialOpen={isInitialOpen}
                 isNavigating={isNavigating}
+                isMobile={isMobile}
                 onNext={handleNext}
                 onPrev={handlePrev}
                 onSkip={onSkip}
@@ -715,7 +875,7 @@ export function OnboardingTour({
           to { opacity: 1; transform: scale(1); }
         }
         @keyframes onboarding-tooltip-mobile-in {
-          from { opacity: 0; transform: translateY(12px); }
+          from { opacity: 0; transform: translateY(16px); }
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes onboarding-highlight-in {
@@ -748,6 +908,21 @@ export function OnboardingTour({
           opacity: 1;
           transform: translateX(0);
         }
+        .onboarding-tooltip-mobile-initial-enter {
+          animation: onboarding-tooltip-mobile-in 0.22s ease-out both;
+        }
+        .onboarding-tooltip-mobile-exit {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        .onboarding-tooltip-mobile-enter-from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        .onboarding-tooltip-mobile-enter-to {
+          opacity: 1;
+          transform: translateY(0);
+        }
         .onboarding-highlight-panel {
           transition: opacity 0.2s ease, transform 0.2s ease;
         }
@@ -768,9 +943,6 @@ export function OnboardingTour({
         }
         .onboarding-overlay-enter { animation: onboarding-fade-in 0.2s ease-out both; }
         .onboarding-tooltip-enter { animation: onboarding-tooltip-in 0.2s ease-out both; }
-        .onboarding-tooltip-mobile .onboarding-tooltip-enter {
-          animation-name: onboarding-tooltip-mobile-in;
-        }
         .onboarding-highlight-enter { animation: onboarding-highlight-in 0.2s ease-out both; }
         .onboarding-modal-enter { animation: onboarding-tooltip-in 0.2s ease-out both; }
         .onboarding-confetti-particle {
@@ -785,6 +957,7 @@ export function OnboardingTour({
           .onboarding-modal-enter,
           .onboarding-confetti-particle,
           .onboarding-tooltip-initial-enter,
+          .onboarding-tooltip-mobile-initial-enter,
           .onboarding-highlight-initial-enter {
             animation: none !important;
           }
