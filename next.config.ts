@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@supabase/supabase-js"],
   poweredByHeader: false,
   reactStrictMode: true,
+  outputFileTracingExcludes: {
+    "*": ["node_modules 2/**", ".env 2.local"],
+  },
   webpack: (config) => {
     // node_modules 2 symlink sorununu önle
     config.resolve.symlinks = false;
