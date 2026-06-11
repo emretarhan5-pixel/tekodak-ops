@@ -17,6 +17,10 @@ import { deactivateUser } from "@/lib/api/users/deactivate-user";
 import { deleteUser } from "@/lib/api/users/delete-user";
 import { getUserOpenTasks } from "@/lib/api/users/get-user-open-tasks";
 import { inviteUser } from "@/lib/api/users/invite-user";
+import {
+  sendPasswordReset,
+  setUserPassword,
+} from "@/lib/api/users/reset-user-password";
 import { updateUser } from "@/lib/api/users/update-user";
 import { getPermissions } from "@/lib/utils/permissions";
 
@@ -54,6 +58,8 @@ export default async function SettingsRoutePage({
         activateUserAction={activateUser}
         deleteUserAction={deleteUser}
         getUserOpenTasksAction={getUserOpenTasks}
+        sendPasswordResetAction={sendPasswordReset}
+        setUserPasswordAction={setUserPassword}
         saveBrandAction={saveBrand}
         deactivateBrandAction={deactivateBrand}
         saveDeviceModelAction={saveDeviceModel}

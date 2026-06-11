@@ -23,6 +23,8 @@ import type {
   DeactivateUserAction,
   DeleteUserAction,
   GetUserOpenTasksAction,
+  SendPasswordResetAction,
+  SetUserPasswordAction,
   UpdateUserAction,
   UserListItem,
 } from "@/lib/api/users/types";
@@ -39,6 +41,8 @@ type UsersListProps = {
   activateUserAction: ActivateUserAction;
   deleteUserAction: DeleteUserAction;
   getUserOpenTasksAction: GetUserOpenTasksAction;
+  sendPasswordResetAction: SendPasswordResetAction;
+  setUserPasswordAction: SetUserPasswordAction;
 };
 
 function formatLastLogin(value: string | null): string {
@@ -60,6 +64,8 @@ export function UsersList({
   activateUserAction,
   deleteUserAction,
   getUserOpenTasksAction,
+  sendPasswordResetAction,
+  setUserPasswordAction,
 }: UsersListProps) {
   const [editUser, setEditUser] = useState<UserListItem | null>(null);
 
@@ -137,6 +143,8 @@ export function UsersList({
                       activateUserAction={activateUserAction}
                       deleteUserAction={deleteUserAction}
                       getUserOpenTasksAction={getUserOpenTasksAction}
+                      sendPasswordResetAction={sendPasswordResetAction}
+                      setUserPasswordAction={setUserPasswordAction}
                     />
                   </div>
                 </TableCell>
@@ -176,6 +184,8 @@ export function UsersList({
                   activateUserAction={activateUserAction}
                   deleteUserAction={deleteUserAction}
                   getUserOpenTasksAction={getUserOpenTasksAction}
+                  sendPasswordResetAction={sendPasswordResetAction}
+                  setUserPasswordAction={setUserPasswordAction}
                 />
               </div>
             </div>

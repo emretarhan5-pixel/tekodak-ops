@@ -80,6 +80,17 @@ export type ReassignUserTasksAction = (
   toTechnicianId: string,
 ) => Promise<ActionResult<ReassignUserTasksResult>>;
 
+export type SendPasswordResetAction = (
+  userId: string,
+  email: string,
+) => Promise<ActionResult>;
+
+export type SetUserPasswordAction = (
+  userId: string,
+  password: string,
+  confirmPassword: string,
+) => Promise<ActionResult>;
+
 export type UsersPageData = {
   users: UserListItem[];
   branches: BranchOption[];

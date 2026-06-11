@@ -32,6 +32,8 @@ import type {
   DeleteUserAction,
   GetUserOpenTasksAction,
   InviteUserAction,
+  SendPasswordResetAction,
+  SetUserPasswordAction,
   UpdateUserAction,
 } from "@/lib/api/users/types";
 import type {
@@ -63,6 +65,8 @@ type SettingsPageProps = {
   activateUserAction: ActivateUserAction;
   deleteUserAction: DeleteUserAction;
   getUserOpenTasksAction: GetUserOpenTasksAction;
+  sendPasswordResetAction: SendPasswordResetAction;
+  setUserPasswordAction: SetUserPasswordAction;
   saveBrandAction: SaveBrandAction;
   deactivateBrandAction: DeactivateBrandAction;
   saveDeviceModelAction: SaveDeviceModelAction;
@@ -82,6 +86,8 @@ export function SettingsPage({
   activateUserAction,
   deleteUserAction,
   getUserOpenTasksAction,
+  sendPasswordResetAction,
+  setUserPasswordAction,
   saveBrandAction,
   deactivateBrandAction,
   saveDeviceModelAction,
@@ -152,6 +158,8 @@ export function SettingsPage({
               activateUserAction={activateUserAction}
               deleteUserAction={deleteUserAction}
               getUserOpenTasksAction={getUserOpenTasksAction}
+              sendPasswordResetAction={sendPasswordResetAction}
+              setUserPasswordAction={setUserPasswordAction}
             />
           ) : null}
         </TabsContent>

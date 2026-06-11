@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  KeyRound,
   Loader2,
   MoreVertical,
   Pencil,
@@ -28,12 +29,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ResetUserPasswordDialog } from "@/components/settings/reset-user-password-dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import type {
   ActivateUserAction,
   DeactivateUserAction,
   DeleteUserAction,
   GetUserOpenTasksAction,
+  SendPasswordResetAction,
+  SetUserPasswordAction,
   UserListItem,
   UserOpenTasks,
 } from "@/lib/api/users/types";
@@ -58,6 +62,8 @@ type UserRowActionsProps = {
   activateUserAction: ActivateUserAction;
   deleteUserAction: DeleteUserAction;
   getUserOpenTasksAction: GetUserOpenTasksAction;
+  sendPasswordResetAction: SendPasswordResetAction;
+  setUserPasswordAction: SetUserPasswordAction;
 };
 
 function totalOpenTasks(tasks: UserOpenTasks): number {
@@ -73,8 +79,11 @@ export function UserRowActions({
   activateUserAction,
   deleteUserAction,
   getUserOpenTasksAction,
+  sendPasswordResetAction,
+  setUserPasswordAction,
 }: UserRowActionsProps) {
   const router = useRouter();
+  const [passwordResetOpen, setPasswordResetOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogStep, setDialogStep] = useState<DialogStep>("checking");
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
@@ -266,6 +275,10 @@ export function UserRowActions({
             <Pencil className="size-4" />
             Düzenle
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setPasswordResetOpen(true)}>
+            <KeyRound className="size-4" />
+            Şifre Sıfırla
+          </DropdownMenuItem>
           {user.is_active ? (
             <DropdownMenuItem
               closeOnClick={false}
@@ -297,6 +310,14 @@ export function UserRowActions({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <ResetUserPasswordDialog
+        user={user}
+        open={passwordResetOpen}
+        onOpenChange={setPasswordResetOpen}
+        sendPasswordResetAction={sendPasswordResetAction}
+        setUserPasswordAction={setUserPasswordAction}
+      />
 
       <Dialog
         open={dialogOpen}

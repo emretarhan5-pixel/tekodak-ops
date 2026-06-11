@@ -7,6 +7,8 @@ import type {
   DeactivateUserAction,
   DeleteUserAction,
   GetUserOpenTasksAction,
+  SendPasswordResetAction,
+  SetUserPasswordAction,
   UpdateUserAction,
 } from "@/lib/api/users/types";
 
@@ -19,6 +21,8 @@ type UsersSettingsSectionProps = {
   activateUserAction: ActivateUserAction;
   deleteUserAction: DeleteUserAction;
   getUserOpenTasksAction: GetUserOpenTasksAction;
+  sendPasswordResetAction: SendPasswordResetAction;
+  setUserPasswordAction: SetUserPasswordAction;
 };
 
 export function UsersSettingsSection({
@@ -30,6 +34,8 @@ export function UsersSettingsSection({
   activateUserAction,
   deleteUserAction,
   getUserOpenTasksAction,
+  sendPasswordResetAction,
+  setUserPasswordAction,
 }: UsersSettingsSectionProps) {
   return (
     <UsersList
@@ -42,6 +48,8 @@ export function UsersSettingsSection({
       activateUserAction={activateUserAction}
       deleteUserAction={deleteUserAction}
       getUserOpenTasksAction={getUserOpenTasksAction}
+      sendPasswordResetAction={sendPasswordResetAction}
+      setUserPasswordAction={setUserPasswordAction}
     />
   );
 }

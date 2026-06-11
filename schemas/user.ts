@@ -75,5 +75,20 @@ export const updateUserSchema = z
     }
   });
 
+export const setUserPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(1, "Şifre zorunludur")
+      .min(8, "Şifre en az 8 karakter olmalıdır")
+      .max(72, "Şifre en fazla 72 karakter olabilir"),
+    confirmPassword: z.string().min(1, "Şifre tekrarı zorunludur"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Şifreler eşleşmiyor",
+    path: ["confirmPassword"],
+  });
+
 export type InviteUserInput = z.infer<typeof inviteUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type SetUserPasswordInput = z.infer<typeof setUserPasswordSchema>;
