@@ -128,3 +128,37 @@
     @apply font-sans;
   }
 }
+
+/* Servis talebi stepper — TEKODAK servis aracı */
+.sr-stepper-road-progress {
+  width: calc((100% - 2.5rem) * var(--sr-van-pos) / 100);
+}
+
+.sr-stepper-van {
+  left: calc(1.25rem + (100% - 2.5rem) * var(--sr-van-pos) / 100);
+}
+
+.sr-stepper-motion {
+  transition:
+    left 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sr-stepper-van-shadow {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  z-index: -1;
+  height: 5px;
+  width: 64px;
+  transform: translateX(-50%);
+  border-radius: 9999px;
+  background: rgb(0 0 0 / 0.22);
+  filter: blur(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sr-stepper-motion {
+    transition: none;
+  }
+}
