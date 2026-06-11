@@ -1,6 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
+import Lottie from "lottie-react";
 import { useEffect, useState } from "react";
 
 import type { ServiceRequestDetail as ServiceRequestDetailData } from "@/lib/api/service-requests/types";
@@ -10,6 +11,7 @@ import {
   type ServiceRequestStep,
 } from "@/lib/constants/service-request";
 import { cn } from "@/lib/utils";
+import truckAnimation from "@/public/animations/service-truck.json";
 
 type StepVisualState = "completed" | "active" | "upcoming" | "locked";
 
@@ -102,16 +104,6 @@ export function ServiceRequestStepper({ detail }: ServiceRequestStepperProps) {
       className="-mx-1 px-1 pb-1 sm:mx-0 sm:px-0"
     >
       <div className="relative w-full">
-        <div
-          style={{
-            background: "red",
-            color: "white",
-            padding: "10px",
-            fontSize: "20px",
-          }}
-        >
-          TEST - STEPPER ÇALIŞIYOR 🚐
-        </div>
         <ol className="flex w-full items-stretch gap-1 sm:gap-2">
           {SERVICE_REQUEST_STEPS.map((step) => {
             const state = getStepState(step, detail);
@@ -182,12 +174,16 @@ export function ServiceRequestStepper({ detail }: ServiceRequestStepperProps) {
               left: `${leftPercent}%`,
               top: "50%",
               transform: "translateX(-50%) translateY(-50%)",
-              fontSize: "2rem",
               zIndex: 10,
               transition: prefersReducedMotion ? undefined : VAN_TRAVEL_TRANSITION,
             }}
           >
-            🚐
+            <Lottie
+              animationData={truckAnimation}
+              loop
+              autoplay
+              style={{ width: 60, height: 60 }}
+            />
           </div>
         </div>
 
