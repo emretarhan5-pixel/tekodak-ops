@@ -13,7 +13,13 @@ import type {
   DeactivateUserInput,
   DeactivateUserResult,
 } from "@/lib/api/users/types";
-import { createClient } from "@/lib/supabase/server";
+import {
+  assertNotLastActiveAdmin,
+  assertTargetUserExists,
+  banAuthUser,
+  createUsersAdminClient,
+  deactivateUserProfile,
+} from "@/lib/api/users/user-lifecycle-core";
 
 export async function deactivateUser(
   input: DeactivateUserInput,
@@ -29,46 +35,14 @@ export async function deactivateUser(
       };
     }
 
-    const supabase = await createClient();
-
-    const { data: target, error: fetchError } = await supabase
-      .from("users")
-      .select("id, is_active, role")
-      .eq("id", userId)
-      .is("deleted_at", null)
-      .maybeSingle();
-
-    if (fetchError) {
-      throw new Error(fetchError.message);
-    }
-
-    if (!target) {
-      return { success: false, error: "Kullanıcı bulunamadı" };
-    }
+    const admin = createUsersAdminClient();
+    const target = await assertTargetUserExists(admin, userId);
 
     if (!target.is_active) {
       return { success: false, error: "Kullanıcı zaten pasif" };
     }
 
-    if (target.role === "admin") {
-      const { count: adminCount, error: adminCountError } = await supabase
-        .from("users")
-        .select("id", { count: "exact", head: true })
-        .eq("role", "admin")
-        .eq("is_active", true)
-        .is("deleted_at", null);
-
-      if (adminCountError) {
-        throw new Error(adminCountError.message);
-      }
-
-      if ((adminCount ?? 0) <= 1) {
-        return {
-          success: false,
-          error: "Sistemde en az bir aktif yönetici kalmalıdır",
-        };
-      }
-    }
+    await assertNotLastActiveAdmin(admin, userId, target.role);
 
     if (reassignToTechnicianId) {
       const reassignResult = await reassignUserTasks(
@@ -81,24 +55,8 @@ export async function deactivateUser(
       }
     }
 
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({
-        is_active: false,
-        updated_by: ctx.user.id,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", userId);
-
-    if (updateError) {
-      throw new Error(updateError.message);
-    }
-
-    const { createAdminClient } = await import("@/lib/supabase/admin");
-    const admin = createAdminClient();
-    await admin.auth.admin.updateUserById(userId, {
-      ban_duration: "876000h",
-    });
+    await deactivateUserProfile(admin, userId, ctx.user.id);
+    await banAuthUser(userId);
 
     revalidatePath("/settings");
 

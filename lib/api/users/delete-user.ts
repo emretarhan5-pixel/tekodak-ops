@@ -2,14 +2,22 @@
 
 import { revalidatePath } from "next/cache";
 
-import { deactivateUser } from "@/lib/api/users/deactivate-user";
 import { getAdminUserContext } from "@/lib/api/users/auth";
 import {
   toUsersActionError,
   UsersApiError,
 } from "@/lib/api/users/auth.types";
+import { reassignUserTasks } from "@/lib/api/users/reassign-user-tasks";
 import type { ActionResult, DeleteUserInput } from "@/lib/api/users/types";
-import { createClient } from "@/lib/supabase/server";
+import {
+  assertNotLastActiveAdmin,
+  assertTargetUserExists,
+  banAuthUser,
+  createUsersAdminClient,
+  deactivateUserProfile,
+  removeAuthUser,
+  softDeleteUserProfile,
+} from "@/lib/api/users/user-lifecycle-core";
 
 export async function deleteUser(
   input: DeleteUserInput,
@@ -25,36 +33,12 @@ export async function deleteUser(
       };
     }
 
-    const supabase = await createClient();
+    const admin = createUsersAdminClient();
+    const target = await assertTargetUserExists(admin, userId);
 
-    const { data: target, error: fetchError } = await supabase
-      .from("users")
-      .select("id, is_active, role")
-      .eq("id", userId)
-      .is("deleted_at", null)
-      .maybeSingle();
+    await assertNotLastActiveAdmin(admin, userId, target.role);
 
-    if (fetchError) {
-      throw new Error(fetchError.message);
-    }
-
-    if (!target) {
-      return { success: false, error: "Kullanıcı bulunamadı" };
-    }
-
-    if (target.is_active) {
-      const deactivateResult = await deactivateUser({
-        userId,
-        reassignToTechnicianId,
-      });
-
-      if (!deactivateResult.success) {
-        return { success: false, error: deactivateResult.error };
-      }
-    } else if (reassignToTechnicianId) {
-      const { reassignUserTasks } = await import(
-        "@/lib/api/users/reassign-user-tasks"
-      );
+    if (reassignToTechnicianId) {
       const reassignResult = await reassignUserTasks(
         userId,
         reassignToTechnicianId,
@@ -65,29 +49,13 @@ export async function deleteUser(
       }
     }
 
-    const now = new Date().toISOString();
-
-    const { error: softDeleteError } = await supabase
-      .from("users")
-      .update({
-        deleted_at: now,
-        is_active: false,
-        updated_by: ctx.user.id,
-        updated_at: now,
-      })
-      .eq("id", userId);
-
-    if (softDeleteError) {
-      throw new Error(softDeleteError.message);
+    if (target.is_active) {
+      await deactivateUserProfile(admin, userId, ctx.user.id);
+      await banAuthUser(userId);
     }
 
-    const { createAdminClient } = await import("@/lib/supabase/admin");
-    const admin = createAdminClient();
-    const { error: authDeleteError } = await admin.auth.admin.deleteUser(userId);
-
-    if (authDeleteError) {
-      throw new Error(authDeleteError.message);
-    }
+    await softDeleteUserProfile(admin, userId, ctx.user.id);
+    await removeAuthUser(userId);
 
     revalidatePath("/settings");
 

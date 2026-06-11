@@ -108,6 +108,9 @@ export function UserRowActions({
     setDialogStep("checking");
     setOpenTasks(null);
     setSelectedTechnicianId("");
+    setLoading(true);
+
+    let delegatedToAction = false;
 
     try {
       const tasks = await getUserOpenTasksAction(user.id);
@@ -119,6 +122,8 @@ export function UserRowActions({
       }
 
       if (action === "deactivate") {
+        delegatedToAction = true;
+        setLoading(false);
         await runDeactivate();
         return;
       }
@@ -127,6 +132,10 @@ export function UserRowActions({
     } catch {
       toast.error("Açık görevler kontrol edilemedi");
       resetDialog();
+    } finally {
+      if (!delegatedToAction) {
+        setLoading(false);
+      }
     }
   }
 
@@ -165,14 +174,18 @@ export function UserRowActions({
 
       if (!result.success) {
         toast.error(result.error);
+        setDialogStep("delete_confirm");
         return;
       }
 
       toast.success("Kullanıcı kalıcı olarak silindi");
       resetDialog();
       router.refresh();
-    } catch {
-      toast.error("Beklenmeyen bir hata oluştu");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Beklenmeyen bir hata oluştu";
+      toast.error(message);
+      setDialogStep("delete_confirm");
     } finally {
       setLoading(false);
     }
@@ -255,7 +268,10 @@ export function UserRowActions({
           </DropdownMenuItem>
           {user.is_active ? (
             <DropdownMenuItem
-              onClick={() => beginAction("deactivate")}
+              closeOnClick={false}
+              onClick={() => {
+                void beginAction("deactivate");
+              }}
               disabled={disabled}
             >
               <Power className="size-4" />
@@ -270,7 +286,10 @@ export function UserRowActions({
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
-            onClick={() => beginAction("delete")}
+            closeOnClick={false}
+            onClick={() => {
+              void beginAction("delete");
+            }}
             disabled={disabled}
           >
             <Trash2 className="size-4" />

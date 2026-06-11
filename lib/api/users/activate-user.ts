@@ -8,50 +8,43 @@ import {
   UsersApiError,
 } from "@/lib/api/users/auth.types";
 import type { ActionResult } from "@/lib/api/users/types";
-import { createClient } from "@/lib/supabase/server";
+import {
+  assertTargetUserExists,
+  createUsersAdminClient,
+  unbanAuthUser,
+} from "@/lib/api/users/user-lifecycle-core";
 
 export async function activateUser(userId: string): Promise<ActionResult> {
   try {
     const ctx = await getAdminUserContext();
-    const supabase = await createClient();
-
-    const { data: target, error: fetchError } = await supabase
-      .from("users")
-      .select("id, is_active")
-      .eq("id", userId)
-      .is("deleted_at", null)
-      .maybeSingle();
-
-    if (fetchError) {
-      throw new Error(fetchError.message);
-    }
-
-    if (!target) {
-      return { success: false, error: "Kullanıcı bulunamadı" };
-    }
+    const admin = createUsersAdminClient();
+    const target = await assertTargetUserExists(admin, userId);
 
     if (target.is_active) {
       return { success: false, error: "Kullanıcı zaten aktif" };
     }
 
-    const { error: updateError } = await supabase
+    const { data, error } = await admin
       .from("users")
       .update({
         is_active: true,
         updated_by: ctx.user.id,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", userId);
+      .eq("id", userId)
+      .is("deleted_at", null)
+      .select("id")
+      .maybeSingle();
 
-    if (updateError) {
-      throw new Error(updateError.message);
+    if (error) {
+      throw new Error(error.message);
     }
 
-    const { createAdminClient } = await import("@/lib/supabase/admin");
-    const admin = createAdminClient();
-    await admin.auth.admin.updateUserById(userId, {
-      ban_duration: "none",
-    });
+    if (!data) {
+      return { success: false, error: "Kullanıcı aktifleştirilemedi" };
+    }
+
+    await unbanAuthUser(userId);
 
     revalidatePath("/settings");
 
