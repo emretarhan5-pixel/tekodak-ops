@@ -1,11 +1,11 @@
 "use client";
 
-import { Menu, Search } from "lucide-react";
+import { Menu } from "lucide-react";
 
+import { GlobalSearch } from "@/components/layout/GlobalSearch";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { UserMenu } from "@/components/layout/user-menu";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useUiStore } from "@/stores/ui-store";
 
 type HeaderProps = {
@@ -35,18 +35,11 @@ export function Header({ initialUnreadCount = 0 }: HeaderProps) {
       </div>
 
       <div className="mx-auto hidden max-w-md flex-1 md:flex">
-        <div className="relative w-full">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            readOnly
-            placeholder="Ara… (Cmd+K — yakında)"
-            className="h-9 w-full pl-9"
-            aria-label="Global arama"
-          />
-        </div>
+        <GlobalSearch className="w-full" />
       </div>
 
       <div className="ml-auto flex items-center gap-1">
+        <GlobalSearch variant="mobile" className="md:hidden" />
         <NotificationBell initialUnreadCount={initialUnreadCount} />
         <UserMenu />
       </div>
