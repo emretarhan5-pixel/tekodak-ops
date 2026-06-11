@@ -27,8 +27,10 @@ import {
 } from "@/lib/constants/settings";
 import type { SettingsSearchInput } from "@/schemas/settings";
 import type {
+  ActivateUserAction,
   DeactivateUserAction,
-  GetOpenWorkOrdersAction,
+  DeleteUserAction,
+  GetUserOpenTasksAction,
   InviteUserAction,
   UpdateUserAction,
 } from "@/lib/api/users/types";
@@ -58,7 +60,9 @@ type SettingsPageProps = {
   inviteUserAction: InviteUserAction;
   updateUserAction: UpdateUserAction;
   deactivateUserAction: DeactivateUserAction;
-  getOpenWorkOrdersAction: GetOpenWorkOrdersAction;
+  activateUserAction: ActivateUserAction;
+  deleteUserAction: DeleteUserAction;
+  getUserOpenTasksAction: GetUserOpenTasksAction;
   saveBrandAction: SaveBrandAction;
   deactivateBrandAction: DeactivateBrandAction;
   saveDeviceModelAction: SaveDeviceModelAction;
@@ -75,7 +79,9 @@ export function SettingsPage({
   inviteUserAction,
   updateUserAction,
   deactivateUserAction,
-  getOpenWorkOrdersAction,
+  activateUserAction,
+  deleteUserAction,
+  getUserOpenTasksAction,
   saveBrandAction,
   deactivateBrandAction,
   saveDeviceModelAction,
@@ -143,7 +149,9 @@ export function SettingsPage({
               onInviteClick={() => setInviteOpen(true)}
               updateUserAction={updateUserAction}
               deactivateUserAction={deactivateUserAction}
-              getOpenWorkOrdersAction={getOpenWorkOrdersAction}
+              activateUserAction={activateUserAction}
+              deleteUserAction={deleteUserAction}
+              getUserOpenTasksAction={getUserOpenTasksAction}
             />
           ) : null}
         </TabsContent>

@@ -29,8 +29,26 @@ export type InviteUserResult = {
   recoveryLink: string | null;
 };
 
-export type DeactivateUserResult = {
-  openWorkOrders: number;
+export type UserOpenTasks = {
+  openServiceRequests: number;
+  openMaintenancePlans: number;
+};
+
+export type DeactivateUserInput = {
+  userId: string;
+  reassignToTechnicianId?: string;
+};
+
+export type DeleteUserInput = {
+  userId: string;
+  reassignToTechnicianId?: string;
+};
+
+export type DeactivateUserResult = Record<string, never>;
+
+export type ReassignUserTasksResult = {
+  reassignedServiceRequests: number;
+  reassignedMaintenancePlans: number;
 };
 
 export type InviteUserAction = (
@@ -42,12 +60,25 @@ export type UpdateUserAction = (
 ) => Promise<ActionResult>;
 
 export type DeactivateUserAction = (
-  userId: string,
+  input: DeactivateUserInput,
 ) => Promise<ActionResult<DeactivateUserResult>>;
 
-export type GetOpenWorkOrdersAction = (
+export type ActivateUserAction = (
   userId: string,
-) => Promise<number>;
+) => Promise<ActionResult>;
+
+export type DeleteUserAction = (
+  input: DeleteUserInput,
+) => Promise<ActionResult>;
+
+export type GetUserOpenTasksAction = (
+  userId: string,
+) => Promise<UserOpenTasks>;
+
+export type ReassignUserTasksAction = (
+  fromUserId: string,
+  toTechnicianId: string,
+) => Promise<ActionResult<ReassignUserTasksResult>>;
 
 export type UsersPageData = {
   users: UserListItem[];

@@ -2,22 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 
+import { deactivateUser } from "@/lib/api/users/deactivate-user";
 import { getAdminUserContext } from "@/lib/api/users/auth";
 import {
   toUsersActionError,
   UsersApiError,
 } from "@/lib/api/users/auth.types";
-import { reassignUserTasks } from "@/lib/api/users/reassign-user-tasks";
-import type {
-  ActionResult,
-  DeactivateUserInput,
-  DeactivateUserResult,
-} from "@/lib/api/users/types";
+import type { ActionResult, DeleteUserInput } from "@/lib/api/users/types";
 import { createClient } from "@/lib/supabase/server";
 
-export async function deactivateUser(
-  input: DeactivateUserInput,
-): Promise<ActionResult<DeactivateUserResult>> {
+export async function deleteUser(
+  input: DeleteUserInput,
+): Promise<ActionResult> {
   try {
     const ctx = await getAdminUserContext();
     const { userId, reassignToTechnicianId } = input;
@@ -25,7 +21,7 @@ export async function deactivateUser(
     if (userId === ctx.user.id) {
       return {
         success: false,
-        error: "Kendi hesabınızı pasifleştiremezsiniz",
+        error: "Kendi hesabınızı silemezsiniz",
       };
     }
 
@@ -46,31 +42,19 @@ export async function deactivateUser(
       return { success: false, error: "Kullanıcı bulunamadı" };
     }
 
-    if (!target.is_active) {
-      return { success: false, error: "Kullanıcı zaten pasif" };
-    }
+    if (target.is_active) {
+      const deactivateResult = await deactivateUser({
+        userId,
+        reassignToTechnicianId,
+      });
 
-    if (target.role === "admin") {
-      const { count: adminCount, error: adminCountError } = await supabase
-        .from("users")
-        .select("id", { count: "exact", head: true })
-        .eq("role", "admin")
-        .eq("is_active", true)
-        .is("deleted_at", null);
-
-      if (adminCountError) {
-        throw new Error(adminCountError.message);
+      if (!deactivateResult.success) {
+        return { success: false, error: deactivateResult.error };
       }
-
-      if ((adminCount ?? 0) <= 1) {
-        return {
-          success: false,
-          error: "Sistemde en az bir aktif yönetici kalmalıdır",
-        };
-      }
-    }
-
-    if (reassignToTechnicianId) {
+    } else if (reassignToTechnicianId) {
+      const { reassignUserTasks } = await import(
+        "@/lib/api/users/reassign-user-tasks"
+      );
       const reassignResult = await reassignUserTasks(
         userId,
         reassignToTechnicianId,
@@ -81,31 +65,33 @@ export async function deactivateUser(
       }
     }
 
-    const { error: updateError } = await supabase
+    const now = new Date().toISOString();
+
+    const { error: softDeleteError } = await supabase
       .from("users")
       .update({
+        deleted_at: now,
         is_active: false,
         updated_by: ctx.user.id,
-        updated_at: new Date().toISOString(),
+        updated_at: now,
       })
       .eq("id", userId);
 
-    if (updateError) {
-      throw new Error(updateError.message);
+    if (softDeleteError) {
+      throw new Error(softDeleteError.message);
     }
 
     const { createAdminClient } = await import("@/lib/supabase/admin");
     const admin = createAdminClient();
-    await admin.auth.admin.updateUserById(userId, {
-      ban_duration: "876000h",
-    });
+    const { error: authDeleteError } = await admin.auth.admin.deleteUser(userId);
+
+    if (authDeleteError) {
+      throw new Error(authDeleteError.message);
+    }
 
     revalidatePath("/settings");
 
-    return {
-      success: true,
-      data: {},
-    };
+    return { success: true, data: undefined };
   } catch (error) {
     if (error instanceof UsersApiError) {
       return { success: false, error: error.message };

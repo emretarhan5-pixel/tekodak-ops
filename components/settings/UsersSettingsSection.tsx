@@ -3,8 +3,10 @@
 import { UsersList } from "@/components/settings/users-list";
 import type { SettingsUsersData } from "@/lib/api/settings/types";
 import type {
+  ActivateUserAction,
   DeactivateUserAction,
-  GetOpenWorkOrdersAction,
+  DeleteUserAction,
+  GetUserOpenTasksAction,
   UpdateUserAction,
 } from "@/lib/api/users/types";
 
@@ -14,7 +16,9 @@ type UsersSettingsSectionProps = {
   onInviteClick: () => void;
   updateUserAction: UpdateUserAction;
   deactivateUserAction: DeactivateUserAction;
-  getOpenWorkOrdersAction: GetOpenWorkOrdersAction;
+  activateUserAction: ActivateUserAction;
+  deleteUserAction: DeleteUserAction;
+  getUserOpenTasksAction: GetUserOpenTasksAction;
 };
 
 export function UsersSettingsSection({
@@ -23,7 +27,9 @@ export function UsersSettingsSection({
   onInviteClick,
   updateUserAction,
   deactivateUserAction,
-  getOpenWorkOrdersAction,
+  activateUserAction,
+  deleteUserAction,
+  getUserOpenTasksAction,
 }: UsersSettingsSectionProps) {
   return (
     <UsersList
@@ -33,7 +39,9 @@ export function UsersSettingsSection({
       onInviteClick={onInviteClick}
       updateUserAction={updateUserAction}
       deactivateUserAction={deactivateUserAction}
-      getOpenWorkOrdersAction={getOpenWorkOrdersAction}
+      activateUserAction={activateUserAction}
+      deleteUserAction={deleteUserAction}
+      getUserOpenTasksAction={getUserOpenTasksAction}
     />
   );
 }

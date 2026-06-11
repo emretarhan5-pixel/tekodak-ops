@@ -12,8 +12,10 @@ import { saveCategory } from "@/lib/api/settings/save-category";
 import { saveCompanySettings } from "@/lib/api/settings/save-company-settings";
 import { saveDeviceModel } from "@/lib/api/settings/save-device-model";
 import { getDashboardUser } from "@/lib/auth/get-dashboard-user";
+import { activateUser } from "@/lib/api/users/activate-user";
 import { deactivateUser } from "@/lib/api/users/deactivate-user";
-import { getOpenWorkOrdersForUser } from "@/lib/api/users/count-open-work-orders";
+import { deleteUser } from "@/lib/api/users/delete-user";
+import { getUserOpenTasks } from "@/lib/api/users/get-user-open-tasks";
 import { inviteUser } from "@/lib/api/users/invite-user";
 import { updateUser } from "@/lib/api/users/update-user";
 import { getPermissions } from "@/lib/utils/permissions";
@@ -49,7 +51,9 @@ export default async function SettingsRoutePage({
         inviteUserAction={inviteUser}
         updateUserAction={updateUser}
         deactivateUserAction={deactivateUser}
-        getOpenWorkOrdersAction={getOpenWorkOrdersForUser}
+        activateUserAction={activateUser}
+        deleteUserAction={deleteUser}
+        getUserOpenTasksAction={getUserOpenTasks}
         saveBrandAction={saveBrand}
         deactivateBrandAction={deactivateBrand}
         saveDeviceModelAction={saveDeviceModel}

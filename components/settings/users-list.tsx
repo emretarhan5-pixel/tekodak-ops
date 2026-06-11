@@ -2,11 +2,11 @@
 
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-import { Pencil, Plus, UserPlus } from "lucide-react";
+import { Plus, UserPlus } from "lucide-react";
 import { useState } from "react";
 
-import { DeactivateUserButton } from "@/components/settings/deactivate-user-button";
 import { EditUserDialog } from "@/components/settings/edit-user-dialog";
+import { UserRowActions } from "@/components/settings/user-row-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,9 +18,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type {
+  ActivateUserAction,
   BranchOption,
   DeactivateUserAction,
-  GetOpenWorkOrdersAction,
+  DeleteUserAction,
+  GetUserOpenTasksAction,
   UpdateUserAction,
   UserListItem,
 } from "@/lib/api/users/types";
@@ -34,7 +36,9 @@ type UsersListProps = {
   onInviteClick: () => void;
   updateUserAction: UpdateUserAction;
   deactivateUserAction: DeactivateUserAction;
-  getOpenWorkOrdersAction: GetOpenWorkOrdersAction;
+  activateUserAction: ActivateUserAction;
+  deleteUserAction: DeleteUserAction;
+  getUserOpenTasksAction: GetUserOpenTasksAction;
 };
 
 function formatLastLogin(value: string | null): string {
@@ -53,7 +57,9 @@ export function UsersList({
   onInviteClick,
   updateUserAction,
   deactivateUserAction,
-  getOpenWorkOrdersAction,
+  activateUserAction,
+  deleteUserAction,
+  getUserOpenTasksAction,
 }: UsersListProps) {
   const [editUser, setEditUser] = useState<UserListItem | null>(null);
 
@@ -121,22 +127,16 @@ export function UsersList({
                   {formatLastLogin(user.last_login_at)}
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center justify-end gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-9"
-                      onClick={() => setEditUser(user)}
-                    >
-                      <Pencil className="size-3.5" />
-                      Düzenle
-                    </Button>
-                    <DeactivateUserButton
+                  <div className="flex items-center justify-end">
+                    <UserRowActions
                       user={user}
+                      users={users}
                       disabled={user.id === currentUserId}
+                      onEdit={() => setEditUser(user)}
                       deactivateUserAction={deactivateUserAction}
-                      getOpenWorkOrdersAction={getOpenWorkOrdersAction}
+                      activateUserAction={activateUserAction}
+                      deleteUserAction={deleteUserAction}
+                      getUserOpenTasksAction={getUserOpenTasksAction}
                     />
                   </div>
                 </TableCell>
@@ -157,15 +157,27 @@ export function UsersList({
                 <p className="font-semibold">{user.full_name}</p>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
               </div>
-              <Badge
-                className={cn(
-                  user.is_active
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                    : "",
-                )}
-              >
-                {user.is_active ? "Aktif" : "Pasif"}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge
+                  className={cn(
+                    user.is_active
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                      : "",
+                  )}
+                >
+                  {user.is_active ? "Aktif" : "Pasif"}
+                </Badge>
+                <UserRowActions
+                  user={user}
+                  users={users}
+                  disabled={user.id === currentUserId}
+                  onEdit={() => setEditUser(user)}
+                  deactivateUserAction={deactivateUserAction}
+                  activateUserAction={activateUserAction}
+                  deleteUserAction={deleteUserAction}
+                  getUserOpenTasksAction={getUserOpenTasksAction}
+                />
+              </div>
             </div>
             <div className="flex flex-wrap gap-2 text-sm">
               <Badge variant="outline">{ROLE_LABELS[user.role]}</Badge>
@@ -178,24 +190,6 @@ export function UsersList({
             <p className="text-xs text-muted-foreground">
               Son giriş: {formatLastLogin(user.last_login_at)}
             </p>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-10 flex-1"
-                onClick={() => setEditUser(user)}
-              >
-                <Pencil className="size-4" />
-                Düzenle
-              </Button>
-              <DeactivateUserButton
-                user={user}
-                disabled={user.id === currentUserId}
-                deactivateUserAction={deactivateUserAction}
-                getOpenWorkOrdersAction={getOpenWorkOrdersAction}
-              />
-            </div>
           </div>
         ))}
       </div>
