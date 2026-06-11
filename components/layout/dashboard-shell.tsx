@@ -8,6 +8,7 @@ import {
   SheetContent,
 } from "@/components/ui/sheet";
 import { useUiStore } from "@/stores/ui-store";
+import { cn } from "@/lib/utils";
 
 type DashboardShellProps = {
   children: React.ReactNode;
@@ -18,11 +19,12 @@ export function DashboardShell({
   children,
   initialUnreadCount = 0,
 }: DashboardShellProps) {
-  const { mobileSidebarOpen, setMobileSidebarOpen } = useUiStore();
+  const { mobileSidebarOpen, setMobileSidebarOpen, sidebarCollapsed } =
+    useUiStore();
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <div className="hidden md:flex md:shrink-0">
+    <div className="min-h-screen bg-background">
+      <div className="hidden md:block">
         <Sidebar />
       </div>
 
@@ -35,7 +37,12 @@ export function DashboardShell({
         </SheetContent>
       </Sheet>
 
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+      <div
+        className={cn(
+          "flex min-h-screen min-w-0 flex-col",
+          sidebarCollapsed ? "md:ml-[72px]" : "md:ml-64",
+        )}
+      >
         <Header initialUnreadCount={initialUnreadCount} />
         <main className="flex-1 overflow-y-auto p-4 pb-24 md:p-6 md:pb-6">
           {children}

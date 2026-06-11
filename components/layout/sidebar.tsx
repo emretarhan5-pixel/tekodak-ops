@@ -36,9 +36,13 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-full flex-col bg-card",
-        isMobileDrawer ? "w-full" : "border-r border-border",
-        !isMobileDrawer && (sidebarCollapsed ? "w-[72px]" : "w-64"),
+        "flex flex-col bg-card",
+        isMobileDrawer
+          ? "h-full w-full"
+          : cn(
+              "fixed top-0 left-0 z-40 h-screen overflow-hidden border-r border-border",
+              sidebarCollapsed ? "w-[72px]" : "w-64",
+            ),
         className,
       )}
     >
@@ -84,7 +88,12 @@ export function Sidebar({
         </div>
       )}
 
-      <div className={cn("flex flex-1 flex-col overflow-y-auto", isMobileDrawer ? "py-3" : "py-4")}>
+      <div
+        className={cn(
+          "min-h-0 flex-1 overflow-y-auto",
+          isMobileDrawer ? "py-3" : "py-4",
+        )}
+      >
         <SidebarNav
           items={navItems}
           collapsed={isMobileDrawer ? false : sidebarCollapsed}
@@ -93,7 +102,7 @@ export function Sidebar({
         />
       </div>
 
-      <div className="mt-auto border-t border-border p-3">
+      <div className="shrink-0 border-t border-border p-3">
         {(!sidebarCollapsed || isMobileDrawer) && (
           <div className={cn("px-2 text-xs text-muted-foreground", !isMobileDrawer && "mb-3")}>
             <p className="font-medium text-foreground">{user.full_name}</p>
