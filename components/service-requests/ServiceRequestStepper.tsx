@@ -14,9 +14,8 @@ import { cn } from "@/lib/utils";
 type StepVisualState = "completed" | "active" | "upcoming" | "locked";
 
 const STEP_COUNT = SERVICE_REQUEST_STEPS.length;
-const VAN_SIZE_PX = 80;
-/** Lottie alt kenarı yol hizası (h-16 yol konteyneri, %50 çizgi) */
-const VAN_ROAD_ALIGN_Y = 72;
+const VAN_TRAVEL_TRANSITION = "left 0.8s ease";
+const ROAD_PROGRESS_TRANSITION = "width 0.8s ease";
 
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
@@ -82,8 +81,7 @@ export function ServiceRequestStepper({ detail }: ServiceRequestStepperProps) {
   const [hasEntered, setHasEntered] = useState(prefersReducedMotion);
 
   const vanStep = getVanStep(detail);
-  const targetPercent = stepToPercent(vanStep);
-  const displayPercent = hasEntered ? targetPercent : 0;
+  const leftPercent = hasEntered ? stepToPercent(vanStep) : 0;
 
   useEffect(() => {
     if (prefersReducedMotion) {
@@ -97,12 +95,6 @@ export function ServiceRequestStepper({ detail }: ServiceRequestStepperProps) {
 
     return () => window.cancelAnimationFrame(frame);
   }, [prefersReducedMotion]);
-
-  const roadStyle = {
-    "--sr-van-pos": `${displayPercent}`,
-  } as React.CSSProperties;
-
-  const motionClass = prefersReducedMotion ? "" : "sr-stepper-motion";
 
   return (
     <nav
@@ -158,38 +150,34 @@ export function ServiceRequestStepper({ detail }: ServiceRequestStepperProps) {
         </ol>
 
         <div
-          className="sr-stepper-road relative mx-auto mt-4 h-16 max-w-full overflow-visible"
-          style={roadStyle}
+          className="relative mx-auto mt-4 w-full overflow-visible"
+          style={{ position: "relative", height: "60px", width: "100%" }}
         >
           <div
-            className="sr-stepper-road-track absolute top-1/2 right-5 left-5 h-1 -translate-y-1/2 rounded-full bg-muted"
+            className="absolute top-1/2 right-0 left-0 h-1 -translate-y-1/2 rounded-full bg-muted"
             aria-hidden
           />
           <div
-            className={cn(
-              "sr-stepper-road-progress absolute top-1/2 left-5 h-1.5 -translate-y-1/2 rounded-full bg-emerald-700 dark:bg-emerald-500",
-              motionClass,
-            )}
+            className="absolute top-1/2 left-0 h-1.5 -translate-y-1/2 rounded-full bg-emerald-700 dark:bg-emerald-500"
+            style={{
+              width: `${leftPercent}%`,
+              transition: prefersReducedMotion ? undefined : ROAD_PROGRESS_TRANSITION,
+            }}
             aria-hidden
           />
-
           <div
-            className={cn(
-              "sr-stepper-van absolute z-10 -translate-x-1/2",
-              motionClass,
-            )}
-            style={{ top: `calc(50% - ${VAN_ROAD_ALIGN_Y}px)` }}
             aria-hidden
+            style={{
+              position: "absolute",
+              left: `${leftPercent}%`,
+              top: "50%",
+              transform: "translateX(-50%) translateY(-50%)",
+              fontSize: "2rem",
+              zIndex: 10,
+              transition: prefersReducedMotion ? undefined : VAN_TRAVEL_TRANSITION,
+            }}
           >
-            <div className="relative">
-              <div className="sr-stepper-van-shadow" />
-              <span
-                className="flex items-center justify-center text-5xl leading-none"
-                style={{ width: VAN_SIZE_PX, height: VAN_SIZE_PX }}
-              >
-                🚐
-              </span>
-            </div>
+            🚐
           </div>
         </div>
 
