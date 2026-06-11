@@ -8,8 +8,8 @@ import {
   UsersApiError,
 } from "@/lib/api/users/auth.types";
 import type { ActionResult } from "@/lib/api/users/types";
+import { createUsersAdminClient } from "@/lib/api/users/user-lifecycle-core";
 import { USER_ROLES } from "@/lib/constants/roles";
-import { createClient } from "@/lib/supabase/server";
 import { updateUserSchema, type UpdateUserInput } from "@/schemas/user";
 
 export async function updateUser(
@@ -18,7 +18,7 @@ export async function updateUser(
   try {
     const input = updateUserSchema.parse(rawInput);
     const ctx = await getAdminUserContext();
-    const supabase = await createClient();
+    const admin = createUsersAdminClient();
 
     if (input.id === ctx.user.id && input.role !== USER_ROLES.ADMIN) {
       return {
@@ -27,7 +27,7 @@ export async function updateUser(
       };
     }
 
-    const { data: target, error: fetchError } = await supabase
+    const { data: target, error: fetchError } = await admin
       .from("users")
       .select("id, role")
       .eq("id", input.id)
@@ -42,10 +42,37 @@ export async function updateUser(
       return { success: false, error: "Kullanıcı bulunamadı" };
     }
 
-    const branchId =
-      input.role === USER_ROLES.STAFF ? input.branch_id ?? null : null;
+    if (
+      target.role === USER_ROLES.ADMIN &&
+      input.role !== USER_ROLES.ADMIN
+    ) {
+      const { count: adminCount, error: adminCountError } = await admin
+        .from("users")
+        .select("id", { count: "exact", head: true })
+        .eq("role", "admin")
+        .eq("is_active", true)
+        .is("deleted_at", null);
 
-    const { error: updateError } = await supabase
+      if (adminCountError) {
+        throw new Error(adminCountError.message);
+      }
+
+      if ((adminCount ?? 0) <= 1) {
+        return {
+          success: false,
+          error: "Sistemde en az bir aktif yönetici kalmalıdır",
+        };
+      }
+    }
+
+    const branchId =
+      input.role === USER_ROLES.STAFF
+        ? input.branch_id && input.branch_id !== ""
+          ? input.branch_id
+          : null
+        : null;
+
+    const { data: updated, error: updateError } = await admin
       .from("users")
       .update({
         full_name: input.full_name.trim(),
@@ -54,10 +81,17 @@ export async function updateUser(
         updated_by: ctx.user.id,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", input.id);
+      .eq("id", input.id)
+      .is("deleted_at", null)
+      .select("id")
+      .maybeSingle();
 
     if (updateError) {
       throw new Error(updateError.message);
+    }
+
+    if (!updated) {
+      return { success: false, error: "Kullanıcı güncellenemedi" };
     }
 
     revalidatePath("/settings");

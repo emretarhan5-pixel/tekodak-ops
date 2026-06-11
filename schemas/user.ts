@@ -56,14 +56,17 @@ export const updateUserSchema = z
       .nullable(),
   })
   .superRefine((data, ctx) => {
-    if (data.role === USER_ROLES.STAFF && !data.branch_id) {
+    const branchId =
+      data.branch_id && data.branch_id !== "" ? data.branch_id : null;
+
+    if (data.role === USER_ROLES.STAFF && !branchId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["branch_id"],
         message: "Personel için şube seçimi zorunludur",
       });
     }
-    if (data.role === USER_ROLES.ADMIN && data.branch_id) {
+    if (data.role === USER_ROLES.ADMIN && branchId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["branch_id"],

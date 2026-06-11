@@ -79,6 +79,17 @@ export function EditUserDialog({
     });
   }, [user, open, form]);
 
+  useEffect(() => {
+    if (role === USER_ROLES.ADMIN) {
+      form.setValue("branch_id", "", { shouldValidate: true });
+    }
+  }, [role, form]);
+
+  function onInvalid() {
+    const firstError = Object.values(form.formState.errors)[0];
+    toast.error(firstError?.message ?? "Lütfen zorunlu alanları doldurun");
+  }
+
   async function onSubmit(values: UpdateUserInput) {
     if (!user) return;
 
@@ -108,7 +119,8 @@ export function EditUserDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
+          <input type="hidden" {...form.register("id")} />
           <DialogHeader>
             <DialogTitle>Kullanıcıyı düzenle</DialogTitle>
             <DialogDescription>
