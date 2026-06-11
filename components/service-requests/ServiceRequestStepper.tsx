@@ -1,7 +1,6 @@
 "use client";
 
 import { Check } from "lucide-react";
-import Lottie from "lottie-react";
 import { useEffect, useState } from "react";
 
 import type { ServiceRequestDetail as ServiceRequestDetailData } from "@/lib/api/service-requests/types";
@@ -11,7 +10,6 @@ import {
   type ServiceRequestStep,
 } from "@/lib/constants/service-request";
 import { cn } from "@/lib/utils";
-import truckAnimation from "@/public/animations/service-truck.json";
 
 type StepVisualState = "completed" | "active" | "upcoming" | "locked";
 
@@ -185,12 +183,12 @@ export function ServiceRequestStepper({ detail }: ServiceRequestStepperProps) {
           >
             <div className="relative">
               <div className="sr-stepper-van-shadow" />
-              <Lottie
-                animationData={truckAnimation}
-                loop
-                autoplay={!prefersReducedMotion}
+              <span
+                className="flex items-center justify-center text-5xl leading-none"
                 style={{ width: VAN_SIZE_PX, height: VAN_SIZE_PX }}
-              />
+              >
+                🚐
+              </span>
             </div>
           </div>
         </div>
