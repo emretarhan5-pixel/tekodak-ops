@@ -14,7 +14,10 @@ export const inviteUserSchema = z
       .max(200),
     email: z.string().email("Geçerli bir e-posta adresi girin"),
     role: roleSchema,
-    branch_id: z.string().uuid().optional().nullable(),
+    branch_id: z
+      .union([z.string().uuid(), z.literal("")])
+      .optional()
+      .nullable(),
     temporary_password: z
       .string()
       .min(8, "Geçici şifre en az 8 karakter olmalıdır")
@@ -47,7 +50,10 @@ export const updateUserSchema = z
       .min(3, "Ad soyad en az 3 karakter olmalıdır")
       .max(200),
     role: roleSchema,
-    branch_id: z.string().uuid().optional().nullable(),
+    branch_id: z
+      .union([z.string().uuid(), z.literal("")])
+      .optional()
+      .nullable(),
   })
   .superRefine((data, ctx) => {
     if (data.role === USER_ROLES.STAFF && !data.branch_id) {

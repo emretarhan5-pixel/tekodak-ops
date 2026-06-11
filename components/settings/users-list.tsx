@@ -7,7 +7,6 @@ import { useState } from "react";
 
 import { DeactivateUserButton } from "@/components/settings/deactivate-user-button";
 import { EditUserDialog } from "@/components/settings/edit-user-dialog";
-import { InviteUserDialog } from "@/components/settings/invite-user-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +21,6 @@ import type {
   BranchOption,
   DeactivateUserAction,
   GetOpenWorkOrdersAction,
-  InviteUserAction,
   UpdateUserAction,
   UserListItem,
 } from "@/lib/api/users/types";
@@ -33,7 +31,7 @@ type UsersListProps = {
   users: UserListItem[];
   branches: BranchOption[];
   currentUserId: string;
-  inviteUserAction: InviteUserAction;
+  onInviteClick: () => void;
   updateUserAction: UpdateUserAction;
   deactivateUserAction: DeactivateUserAction;
   getOpenWorkOrdersAction: GetOpenWorkOrdersAction;
@@ -52,12 +50,11 @@ export function UsersList({
   users,
   branches,
   currentUserId,
-  inviteUserAction,
+  onInviteClick,
   updateUserAction,
   deactivateUserAction,
   getOpenWorkOrdersAction,
 }: UsersListProps) {
-  const [inviteOpen, setInviteOpen] = useState(false);
   const [editUser, setEditUser] = useState<UserListItem | null>(null);
 
   return (
@@ -70,7 +67,7 @@ export function UsersList({
         <Button
           type="button"
           className="h-10 gap-2"
-          onClick={() => setInviteOpen(true)}
+          onClick={onInviteClick}
         >
           <UserPlus className="size-4" />
           Yeni Kullanıcı Davet Et
@@ -209,18 +206,11 @@ export function UsersList({
           <p className="text-sm text-muted-foreground">
             Henüz başka kullanıcı yok. TEKODAK ekibini davet edin.
           </p>
-          <Button type="button" onClick={() => setInviteOpen(true)}>
+          <Button type="button" onClick={onInviteClick}>
             İlk kullanıcıyı ekle
           </Button>
         </div>
       ) : null}
-
-      <InviteUserDialog
-        open={inviteOpen}
-        onOpenChange={setInviteOpen}
-        branches={branches}
-        inviteUserAction={inviteUserAction}
-      />
 
       <EditUserDialog
         user={editUser}

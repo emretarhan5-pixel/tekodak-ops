@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, type ReactNode } from "react";
+import { useEffect, useState, useTransition, type ReactNode } from "react";
 import {
   Building2,
   FileText,
@@ -16,6 +16,7 @@ import { BrandsSettings } from "@/components/settings/BrandsSettings";
 import { CategoriesSettings } from "@/components/settings/CategoriesSettings";
 import { CompanySettingsForm } from "@/components/settings/CompanySettingsForm";
 import { DeviceModelsSettings } from "@/components/settings/DeviceModelsSettings";
+import { InviteUserDialog } from "@/components/settings/invite-user-dialog";
 import { UsersSettingsSection } from "@/components/settings/UsersSettingsSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { SettingsPageData } from "@/lib/api/settings/types";
@@ -87,6 +88,14 @@ export function SettingsPage({
   const pathname = usePathname();
   const urlSearchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const usersData = pageData.tab === "users" ? pageData.data : null;
+
+  useEffect(() => {
+    if (!usersData) {
+      setInviteOpen(false);
+    }
+  }, [usersData]);
 
   function handleTabChange(nextTab: string) {
     const next = new URLSearchParams(urlSearchParams?.toString() ?? "");
@@ -126,12 +135,12 @@ export function SettingsPage({
           ))}
         </TabsList>
 
-        <TabsContent value="users" className="mt-4">
-          {pageData.tab === "users" ? (
+        <TabsContent value="users" className="mt-4" keepMounted>
+          {usersData ? (
             <UsersSettingsSection
-              data={pageData.data}
+              data={usersData}
               currentUserId={currentUserId}
-              inviteUserAction={inviteUserAction}
+              onInviteClick={() => setInviteOpen(true)}
               updateUserAction={updateUserAction}
               deactivateUserAction={deactivateUserAction}
               getOpenWorkOrdersAction={getOpenWorkOrdersAction}
@@ -196,6 +205,15 @@ export function SettingsPage({
           ) : null}
         </TabsContent>
       </Tabs>
+
+      {usersData ? (
+        <InviteUserDialog
+          open={inviteOpen}
+          onOpenChange={setInviteOpen}
+          branches={usersData.branches}
+          inviteUserAction={inviteUserAction}
+        />
+      ) : null}
     </div>
   );
 }

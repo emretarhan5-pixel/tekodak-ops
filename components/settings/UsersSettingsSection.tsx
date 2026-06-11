@@ -1,16 +1,17 @@
+"use client";
+
 import { UsersList } from "@/components/settings/users-list";
 import type { SettingsUsersData } from "@/lib/api/settings/types";
 import type {
   DeactivateUserAction,
   GetOpenWorkOrdersAction,
-  InviteUserAction,
   UpdateUserAction,
 } from "@/lib/api/users/types";
 
 type UsersSettingsSectionProps = {
   data: SettingsUsersData;
   currentUserId: string;
-  inviteUserAction: InviteUserAction;
+  onInviteClick: () => void;
   updateUserAction: UpdateUserAction;
   deactivateUserAction: DeactivateUserAction;
   getOpenWorkOrdersAction: GetOpenWorkOrdersAction;
@@ -19,7 +20,7 @@ type UsersSettingsSectionProps = {
 export function UsersSettingsSection({
   data,
   currentUserId,
-  inviteUserAction,
+  onInviteClick,
   updateUserAction,
   deactivateUserAction,
   getOpenWorkOrdersAction,
@@ -29,7 +30,7 @@ export function UsersSettingsSection({
       users={data.users}
       branches={data.branches}
       currentUserId={currentUserId}
-      inviteUserAction={inviteUserAction}
+      onInviteClick={onInviteClick}
       updateUserAction={updateUserAction}
       deactivateUserAction={deactivateUserAction}
       getOpenWorkOrdersAction={getOpenWorkOrdersAction}

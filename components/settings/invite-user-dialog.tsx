@@ -87,6 +87,10 @@ export function InviteUserDialog({
     }
   }
 
+  function onInvalid() {
+    toast.error("Lütfen zorunlu alanları doldurun");
+  }
+
   async function onSubmit(values: InviteUserInput) {
     setIsSubmitting(true);
 
@@ -183,7 +187,7 @@ export function InviteUserDialog({
             </DialogFooter>
           </>
         ) : (
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
             <DialogHeader>
               <DialogTitle>Yeni kullanıcı davet et</DialogTitle>
               <DialogDescription>
