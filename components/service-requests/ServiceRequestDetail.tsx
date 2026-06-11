@@ -2,13 +2,14 @@
 
 import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
-import { Check, ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { ServiceRequestPhotos } from "@/components/service-requests/ServiceRequestPhotos";
+import { ServiceRequestStepper } from "@/components/service-requests/ServiceRequestStepper";
 import { ServiceRequestParts } from "@/components/service-requests/ServiceRequestParts";
 import { formatServiceRequestMoney } from "@/components/service-requests/service-request-form-styles";
 import { ServiceRequestStatusBadge } from "@/components/service-requests/service-request-status-badge";
@@ -613,65 +614,7 @@ export function ServiceRequestDetail({
         </div>
       </div>
 
-      <nav
-        aria-label="Servis talebi adımları"
-        className="-mx-1 overflow-x-auto px-1 pb-1 sm:mx-0 sm:px-0"
-      >
-        <ol className="flex min-w-full flex-col gap-3 sm:min-w-[36rem] sm:flex-row sm:items-stretch sm:gap-2">
-          {steps.map((step, index) => {
-            const state = getStepState(step, serviceRequest);
-            return (
-              <li
-                key={step}
-                className="flex min-w-0 flex-1 items-center gap-2 sm:shrink-0"
-              >
-                <div
-                  className={cn(
-                    "flex w-full min-w-0 flex-1 flex-col items-center gap-2 rounded-lg border px-2 py-3 text-center transition-colors sm:min-w-[6.5rem] sm:px-3",
-                    state === "completed" &&
-                      "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/40",
-                    state === "active" &&
-                      "border-primary bg-primary/5 ring-2 ring-primary/20",
-                    (state === "upcoming" || state === "locked") &&
-                      "border-border bg-muted/30 text-muted-foreground",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "flex size-8 items-center justify-center rounded-full text-sm font-semibold",
-                      state === "completed" &&
-                        "bg-emerald-600 text-white dark:bg-emerald-500",
-                      state === "active" && "bg-primary text-primary-foreground",
-                      (state === "upcoming" || state === "locked") &&
-                        "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {state === "completed" ? (
-                      <Check className="size-4" aria-hidden />
-                    ) : (
-                      step
-                    )}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-xs font-medium leading-tight sm:text-sm",
-                      state === "active" && "text-foreground",
-                    )}
-                  >
-                    {SERVICE_REQUEST_STEP_LABELS[step]}
-                  </span>
-                </div>
-                {index < steps.length - 1 ? (
-                  <div
-                    aria-hidden
-                    className="hidden h-px flex-1 bg-border sm:block"
-                  />
-                ) : null}
-              </li>
-            );
-          })}
-        </ol>
-      </nav>
+      <ServiceRequestStepper detail={serviceRequest} />
 
       {steps.map((step) => {
         const state = getStepState(step, serviceRequest);

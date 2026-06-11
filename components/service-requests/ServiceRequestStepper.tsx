@@ -102,6 +102,16 @@ export function ServiceRequestStepper({ detail }: ServiceRequestStepperProps) {
       className="-mx-1 px-1 pb-1 sm:mx-0 sm:px-0"
     >
       <div className="relative w-full">
+        <div
+          style={{
+            background: "red",
+            color: "white",
+            padding: "10px",
+            fontSize: "20px",
+          }}
+        >
+          TEST - STEPPER ÇALIŞIYOR 🚐
+        </div>
         <ol className="flex w-full items-stretch gap-1 sm:gap-2">
           {SERVICE_REQUEST_STEPS.map((step) => {
             const state = getStepState(step, detail);
